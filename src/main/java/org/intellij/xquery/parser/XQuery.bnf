@@ -220,6 +220,7 @@
 
   extends(".+Expr")=ExprSingle
   implements("NamespaceName|VarName|FunctionName")="org.intellij.xquery.psi.XQueryNamedElement"
+  implements("NamedFunctionRef|FunctionCall")="org.intellij.xquery.psi.XQueryFunctionInvocation"
   extends("NamespaceName|VarName|FunctionName")="org.intellij.xquery.psi.impl.XQueryNamedElementImpl"
 }
 
@@ -233,7 +234,7 @@ VersionDeclVersion ::= "version" StringLiteral ("encoding" StringLiteral)? {pin=
 MainModule	   ::=   	Prolog QueryBody {pin=1}
 LibraryModule	   ::=   	ModuleDecl Prolog {pin=1}
 ModuleDecl	   ::=   	"module" "namespace" NamespaceName "=" URILiteral Separator {pin=1 recoverUntil=ModuleDeclRecover}
-NamespaceName ::= NCName  {methods=[getName setName getNameIdentifier]}
+NamespaceName ::= NCName  {methods=[getName setName getNameIdentifier delete]}
 private ModuleDeclRecover ::= !('declare' | 'import')
 Prolog	   ::=   	FirstDecl* SecondDecl* {methods=[processDeclarations]} //{recoverUntil=PrologRecover}
 private FirstDecl ::= DefaultNamespaceDecl | Setter | NamespaceDecl | Import
@@ -267,7 +268,7 @@ VarDecl	   ::=   	"declare" Annotation* "variable" "$" VarName TypeDeclaration? 
 VarValue	   ::=   	ExprSingle
 VarDefaultValue	   ::=   	ExprSingle
 ContextItemDecl	   ::=   	"declare" "context" "item" ("as" ItemType)? ((":=" VarValue) | ("external" (":=" VarDefaultValue)?)) Separator {pin=2}
-FunctionDecl	   ::=   	"declare" Annotation* "function" FunctionName ParamList ("as" SequenceType)? (FunctionBody | "external")  	/* xgc: reserved-function-names */ {pin=3 methods=[getPresentation] recoverUntil=FunctionDeclRec}
+FunctionDecl	   ::=   	"declare" Annotation* "function" FunctionName ParamList ("as" SequenceType)? (FunctionBody | "external")  	/* xgc: reserved-function-names */ {pin=3 methods=[getPresentation getArity] recoverUntil=FunctionDeclRec}
 private FunctionDeclRec ::= !(';')
 ParamList	   ::=   	"(" (Param ("," Param)*)? ")"
 Param	   ::=   	"$" VarName TypeDeclaration?
@@ -404,7 +405,7 @@ ParenthesizedExpr	   ::=   	"(" Expr? ")"
 ContextItemExpr	   ::=   	"."
 OrderedExpr	   ::=   	"ordered" "{" Expr "}"
 UnorderedExpr	   ::=   	"unordered" "{" Expr "}"
-FunctionCall	   ::=   	FunctionName ArgumentList {methods=[getReference]}	/* xgc: reserved-function-names */
+FunctionCall	   ::=   	FunctionName ArgumentList {methods=[getReference getArity]}	/* xgc: reserved-function-names */
 				/* gn: parens */
 Argument	   ::=   	ExprSingle | ArgumentPlaceholder
 ArgumentPlaceholder	   ::=   	"?"
@@ -457,7 +458,8 @@ CompTextConstructor	   ::=   	"text" "{" Expr "}"
 CompCommentConstructor	   ::=   	"comment" "{" Expr "}"
 CompPIConstructor	   ::=   	"processing-instruction" (NCName | ("{" Expr "}")) "{" Expr? "}"
 FunctionItemExpr	   ::=   	NamedFunctionRef | InlineFunctionExpr
-NamedFunctionRef	   ::=   	FunctionName "#" IntegerLiteral	/* xgc: reserved-function-names */
+NamedFunctionRef	   ::=   	FunctionName "#" FunctionArity	{methods=[getArity getReference]} /* xgc: reserved-function-names */
+FunctionArity ::=  IntegerLiteral
 InlineFunctionExpr	   ::=   	Annotation* "function" ParamList ("as" SequenceType)? FunctionBody
 SingleType	   ::=   	SimpleTypeName "?"?
 TypeDeclaration	   ::=   	"as" SequenceType
@@ -513,9 +515,9 @@ private PrefixedName	   ::=   	Prefix ':' LocalPart
 private UnprefixedName	   ::=   	LocalPart
 Prefix	   ::=   	NCName
 LocalPart	   ::=   	NCName
-VarName ::= VarNamespace ':' VarLocalName | VarLocalName | URIQualifiedName {methods=[getName setName getNameIdentifier getTextOffset getUseScope]}
+VarName ::= VarNamespace ':' VarLocalName | VarLocalName | URIQualifiedName {methods=[getName setName getNameIdentifier getTextOffset getUseScope getPresentation delete]}
 VarNamespace	   ::=   	NCName {methods=[getReference]}
 VarLocalName	   ::=   	NCName
-FunctionName ::= FunctionNamespace ':' FunctionLocalName | FunctionLocalName | URIQualifiedName {methods=[getName setName getNameIdentifier getTextOffset]}
+FunctionName ::= FunctionNamespace ':' FunctionLocalName | FunctionLocalName | URIQualifiedName {methods=[getName setName getNameIdentifier getTextOffset  getPresentation delete]}
 FunctionNamespace	   ::=   	NCName {methods=[getReference]}
 FunctionLocalName	   ::=   	NCName

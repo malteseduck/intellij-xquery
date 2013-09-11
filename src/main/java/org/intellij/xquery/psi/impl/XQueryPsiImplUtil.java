@@ -17,12 +17,14 @@
 package org.intellij.xquery.psi.impl;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.ResolveState;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.LocalSearchScope;
@@ -34,6 +36,7 @@ import org.intellij.xquery.reference.module.XQueryModuleReference;
 import org.intellij.xquery.reference.namespace.XQueryFunctionNamespaceNameReference;
 import org.intellij.xquery.reference.namespace.XQueryVariableNamespaceNameReference;
 import org.intellij.xquery.reference.variable.XQueryVariableReference;
+import org.intellij.xquery.util.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -135,7 +138,7 @@ public class XQueryPsiImplUtil {
         return new XQueryFunctionNamespaceNameReference(element, new TextRange(0, element.getTextLength()));
     }
 
-    public static PsiReference getReference(XQueryFunctionCall element) {
+    public static PsiReference getReference(XQueryFunctionInvocation element) {
         int localNameOffset = 0;
         if (element.getFunctionName().getFunctionNamespace() != null) {
             localNameOffset += element.getFunctionName().getFunctionNamespace().getTextLength() + SEPARATOR_LENGTH;
@@ -196,7 +199,7 @@ public class XQueryPsiImplUtil {
                 String tailText = (element.getParamList() != null ? element.getParamList().getText() : "") + " as ";
                 String typeText = element.getSequenceType() != null ? element.getSequenceType()
                         .getText() : "item()*";
-                return compressWhitespaces(name + tailText + typeText);
+                return StringUtils.compressWhitespaces(name + tailText + typeText);
             }
 
             @Nullable
@@ -223,7 +226,7 @@ public class XQueryPsiImplUtil {
                 if (element.getTypeDeclaration() != null) {
                     typeText = element.getTypeDeclaration().getText();
                 }
-                return compressWhitespaces(name + " as " + typeText);
+                return StringUtils.compressWhitespaces(name + " as " + typeText);
             }
 
             @Nullable
@@ -240,7 +243,49 @@ public class XQueryPsiImplUtil {
         };
     }
 
-    private static String compressWhitespaces(String text) {
-        return text.replaceAll("\\s+", " ");
+    public static ItemPresentation getPresentation(final XQueryVarName element) {
+        if (element.getParent() instanceof XQueryVarDecl) {
+            return ((XQueryVarDecl) element.getParent()).getPresentation();
+        }
+        return null;
+    }
+
+    public static ItemPresentation getPresentation(final XQueryFunctionName element) {
+        if (element.getParent() instanceof XQueryFunctionDecl) {
+            return ((XQueryFunctionDecl) element.getParent()).getPresentation();
+        }
+        return null;
+    }
+
+    public static int getArity(XQueryFunctionCall functionCall) {
+        return functionCall.getArgumentList().getArgumentList().size();
+    }
+
+    public static int getArity(XQueryNamedFunctionRef functionCall) {
+        return StringUtil.parseInt(functionCall.getFunctionArity().getText(), 0);
+    }
+
+    public static int getArity(XQueryFunctionDecl functionDeclaration) {
+        if (functionDeclaration.getParamList() != null)
+            return functionDeclaration.getParamList().getParamList().size();
+        else
+            return 0;
+    }
+
+    public static void delete(XQueryNamedElement namedElement) {
+        PsiElement declarationElement = namedElement.getParent();
+        final ASTNode parentNode = declarationElement.getParent().getNode();
+        assert parentNode != null;
+
+        ASTNode node = declarationElement.getNode();
+        ASTNode prev = node.getTreePrev();
+        ASTNode next = node.getTreeNext();
+        parentNode.removeChild(node);
+        if (prev == null || prev.getElementType() == TokenType.WHITE_SPACE) {
+            while (next != null && (next.getElementType() == TokenType.WHITE_SPACE || next.getElementType() == XQueryTypes.SEPARATOR)) {
+                parentNode.removeChild(next);
+                next = node.getTreeNext();
+            }
+        }
     }
 }

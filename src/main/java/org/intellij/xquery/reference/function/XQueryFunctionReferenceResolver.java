@@ -27,7 +27,7 @@ import java.util.Collection;
 import java.util.List;
 
 import static org.intellij.xquery.model.XQueryQNameBuilder.aXQueryQName;
-import static org.intellij.xquery.psi.XQueryUtil.removeQuotOrApos;
+import static org.intellij.xquery.util.StringUtils.removeQuotOrApos;
 
 /**
  * User: ligasgr
@@ -36,11 +36,11 @@ import static org.intellij.xquery.psi.XQueryUtil.removeQuotOrApos;
  */
 public class XQueryFunctionReferenceResolver {
 
-    private XQueryFunctionCall myElement;
+    private XQueryFunctionInvocation myElement;
     private String checkedNamespacePrefix;
     private List<XQueryFunctionName> matchingFunctionNames;
 
-    public XQueryFunctionReferenceResolver(XQueryFunctionCall myElement) {
+    public XQueryFunctionReferenceResolver(XQueryFunctionInvocation myElement) {
         if (myElement.getFunctionName().getFunctionNamespace() != null)
             this.checkedNamespacePrefix = myElement.getFunctionName().getFunctionNamespace().getText();
         this.myElement = myElement;
@@ -51,7 +51,22 @@ public class XQueryFunctionReferenceResolver {
         matchingFunctionNames = new ArrayList<XQueryFunctionName>();
         addFunctionDeclarationReferencesFromFile(file, checkedNamespacePrefix);
         addFunctionNameReferencesFromImportedFiles(file);
-        return convertToResolveResults(matchingFunctionNames);
+
+        return convertToResolveResults(filterByArity(myElement.getArity(), matchingFunctionNames));
+    }
+
+    private List<XQueryFunctionName> filterByArity(int arity, List<XQueryFunctionName> matchingFunctionNames) {
+        List<XQueryFunctionName> matchingArityFunctionNames = new ArrayList<XQueryFunctionName>();
+        for (XQueryFunctionName functionName : matchingFunctionNames) {
+            XQueryFunctionDecl functionDeclaration = (XQueryFunctionDecl) functionName.getParent();
+            if (functionDeclaration.getArity() == arity) {
+                matchingArityFunctionNames.add(functionName);
+            }
+        }
+        if (matchingArityFunctionNames.size() > 0)
+            return matchingArityFunctionNames;
+        else
+            return matchingFunctionNames;
     }
 
     private void addFunctionDeclarationReferencesFromFile(XQueryFile file, String checkedNamespacePrefix) {

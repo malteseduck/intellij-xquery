@@ -22,7 +22,7 @@ import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 
-public interface XQueryFunctionCall extends XQueryElement {
+public interface XQueryFunctionCall extends XQueryFunctionInvocation {
 
   @NotNull
   XQueryArgumentList getArgumentList();
@@ -31,5 +31,7 @@ public interface XQueryFunctionCall extends XQueryElement {
   XQueryFunctionName getFunctionName();
 
   PsiReference getReference();
+
+  int getArity();
 
 }

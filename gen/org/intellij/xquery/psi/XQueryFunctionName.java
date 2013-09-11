@@ -20,6 +20,7 @@ package org.intellij.xquery.psi;
 import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
+import com.intellij.navigation.ItemPresentation;
 
 public interface XQueryFunctionName extends XQueryNamedElement {
 
@@ -36,5 +37,9 @@ public interface XQueryFunctionName extends XQueryNamedElement {
   PsiElement getNameIdentifier();
 
   int getTextOffset();
+
+  ItemPresentation getPresentation();
+
+  void delete();
 
 }

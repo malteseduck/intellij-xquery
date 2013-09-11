@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import org.intellij.xquery.XQueryBaseTestCase;
 import org.intellij.xquery.psi.XQueryFunctionCall;
 import org.intellij.xquery.psi.XQueryFunctionDecl;
+import org.intellij.xquery.psi.XQueryNamedFunctionRef;
 import org.intellij.xquery.reference.MatchingStringCondition;
 
 import java.util.List;
@@ -43,7 +44,9 @@ public class XQueryFunctionReferenceTest extends XQueryBaseTestCase {
 
     public void testFunctionCompletionInTheSameFile() {
         myFixture.configureByFiles("FunctionCompletionInTheSameFile.xq");
+
         myFixture.complete(CompletionType.BASIC, 1);
+
         List<String> strings = myFixture.getLookupElementStrings();
         List<String> referenceBasedEntries = findAll(strings, new MatchingStringCondition("example"));
         assertEquals(1, referenceBasedEntries.size());
@@ -51,7 +54,9 @@ public class XQueryFunctionReferenceTest extends XQueryBaseTestCase {
 
     public void testFunctionCompletionInTheSameFileForDuplicatedEntries() {
         myFixture.configureByFiles("FunctionCompletionInTheSameFileForDuplicatedEntries.xq");
+
         myFixture.complete(CompletionType.BASIC, 1);
+
         List<String> strings = myFixture.getLookupElementStrings();
         List<String> referenceBasedEntries = findAll(strings, new MatchingStringCondition("example"));
         assertEquals(2, referenceBasedEntries.size());
@@ -59,7 +64,9 @@ public class XQueryFunctionReferenceTest extends XQueryBaseTestCase {
 
     public void testFunctionCompletionInTheSameFileForSameNameAndDifferentArity() {
         myFixture.configureByFiles("FunctionCompletionInTheSameFileForSameNameAndDifferentArity.xq");
+
         myFixture.complete(CompletionType.BASIC, 1);
+
         List<String> strings = myFixture.getLookupElementStrings();
         List<String> referenceBasedEntries = findAll(strings, new MatchingStringCondition("example"));
         assertEquals(2, referenceBasedEntries.size());
@@ -67,7 +74,9 @@ public class XQueryFunctionReferenceTest extends XQueryBaseTestCase {
 
     public void testFunctionCompletionInTheSameFileWithoutPrefixWithDefaultNamespace() {
         myFixture.configureByFiles("FunctionCompletionInTheSameFileWithoutPrefixWithDefaultNamespace.xq");
+
         myFixture.complete(CompletionType.BASIC, 1);
+
         List<String> strings = myFixture.getLookupElementStrings();
         List<String> referenceBasedEntries = findAll(strings, new MatchingStringCondition("example"));
         assertEquals(1, referenceBasedEntries.size());
@@ -78,7 +87,9 @@ public class XQueryFunctionReferenceTest extends XQueryBaseTestCase {
 
     public void testFunctionCompletionInTheSameFileWithPrefixWithDefaultNamespace() {
         myFixture.configureByFiles("FunctionCompletionInTheSameFileWithPrefixWithDefaultNamespace.xq");
+
         myFixture.complete(CompletionType.BASIC, 1);
+
         List<String> strings = myFixture.getLookupElementStrings();
         List<String> referenceBasedEntries = findAll(strings, new MatchingStringCondition("example"));
         assertEquals(1, referenceBasedEntries.size());
@@ -89,16 +100,30 @@ public class XQueryFunctionReferenceTest extends XQueryBaseTestCase {
 
     public void testFunctionCompletionFromAnotherFile() {
         myFixture.configureByFiles("FunctionCompletionFromAnotherFile.xq", "FunctionReferencedFile.xq");
+
         myFixture.complete(CompletionType.BASIC, 1);
+
         List<String> strings = myFixture.getLookupElementStrings();
         List<String> referenceBasedEntries = findAll(strings, new MatchingStringCondition("library:accessible"));
         assertEquals(1, referenceBasedEntries.size());
     }
 
+    public void testFunctionCompletionFromAnotherFileForPrivate() {
+        myFixture.configureByFiles("FunctionCompletionFromAnotherFileForPrivate.xq", "FunctionReferencedFileWithPrivate.xq");
+
+        myFixture.complete(CompletionType.BASIC, 1);
+
+        List<String> strings = myFixture.getLookupElementStrings();
+        List<String> referenceBasedEntries = findAll(strings, new MatchingStringCondition("library:accessible"));
+        assertEquals(0, referenceBasedEntries.size());
+    }
+
     public void testFunctionCompletionFromAnotherFileWithDefaultNamespaceAndImportedNamespacePrefix() {
         myFixture.configureByFiles("FunctionCompletionFromAnotherFileWithDefaultNamespaceAndImportedNamespacePrefix.xq",
                 "FunctionReferencedFile.xq");
+
         myFixture.complete(CompletionType.BASIC, 1);
+
         List<String> strings = myFixture.getLookupElementStrings();
         List<String> referenceBasedEntries = findAll(strings, new MatchingStringCondition("library:accessible"));
         assertEquals(1, referenceBasedEntries.size());
@@ -110,8 +135,10 @@ public class XQueryFunctionReferenceTest extends XQueryBaseTestCase {
     public void testFunctionCompletionFromAnotherFileWithDefaultNamespaceAndNotImportedNamespacePrefix() {
         myFixture.configureByFiles
                 ("FunctionCompletionFromAnotherFileWithDefaultNamespaceAndNotImportedNamespacePrefix.xq",
-                "FunctionReferencedFile.xq");
+                        "FunctionReferencedFile.xq");
+
         myFixture.complete(CompletionType.BASIC, 1);
+
         List<String> strings = myFixture.getLookupElementStrings();
         List<String> referenceBasedEntriesWithAdditionalNamespace = findAll(strings,
                 new MatchingStringCondition("accessible"));
@@ -121,7 +148,9 @@ public class XQueryFunctionReferenceTest extends XQueryBaseTestCase {
     public void testFunctionCompletionFromAnotherFileWithDefaultNamespaceAndDeclaredNamespace() {
         myFixture.configureByFiles("FunctionCompletionFromAnotherFileWithDefaultNamespaceAndDeclaredNamespace.xq",
                 "FunctionReferencedFile.xq");
+
         myFixture.complete(CompletionType.BASIC, 1);
+
         List<String> strings = myFixture.getLookupElementStrings();
         List<String> referenceBasedEntries = findAll(strings, new MatchingStringCondition("library:accessible"));
         assertEquals(1, referenceBasedEntries.size());
@@ -132,7 +161,9 @@ public class XQueryFunctionReferenceTest extends XQueryBaseTestCase {
 
     public void testFunctionCompletionInTheSameFileWithoutParentheses() {
         myFixture.configureByFiles("FunctionCompletionInTheSameFileWithoutParentheses.xq");
+
         myFixture.complete(CompletionType.BASIC, 1);
+
         List<String> strings = myFixture.getLookupElementStrings();
         List<String> referenceBasedEntries = findAll(strings, new MatchingStringCondition("example"));
         assertEquals(1, referenceBasedEntries.size());
@@ -140,14 +171,18 @@ public class XQueryFunctionReferenceTest extends XQueryBaseTestCase {
 
     public void testFunctionCompletionWithParenthesesAddedAfterFunctionName() {
         myFixture.configureByFile("FunctionCompletionWithParenthesesAdded.xq");
+
         myFixture.completeBasic();
         myFixture.type(Lookup.NORMAL_SELECT_CHAR);
+
         myFixture.checkResultByFile("FunctionCompletionWithParenthesesAddedAfter.xq");
     }
 
     public void testFunctionRenameInTheSameFile() {
         myFixture.configureByFiles("FunctionRenameInTheSameFile.xq");
+
         myFixture.renameElementAtCaret("renamed");
+
         myFixture.checkResultByFile("FunctionRenameInTheSameFile.xq", "FunctionRenameInTheSameFileAfter.xq", false);
     }
 
@@ -183,14 +218,22 @@ public class XQueryFunctionReferenceTest extends XQueryBaseTestCase {
         assertChildOf(resolvedReference, XQueryFunctionDecl.class);
     }
 
+    public void testFunctionNamedReference() {
+        myFixture.configureByFiles("FunctionNamedReference.xq");
+
+        PsiElement resolvedReference = getTargetOfReferenceAtCaret(myFixture, XQueryNamedFunctionRef.class);
+
+        assertChildOf(resolvedReference, XQueryFunctionDecl.class);
+    }
+
     public void testFunctionReferenceFromAnotherFile() {
         myFixture.configureByFiles("FunctionReferenceFromAnotherFile.xq", "FunctionReferencedFile.xq");
 
         PsiElement resolvedReference = getTargetOfReferenceAtCaret(myFixture, XQueryFunctionCall.class);
 
         assertChildOf(resolvedReference, XQueryFunctionDecl.class);
-        XQueryFunctionDecl varDecl = (XQueryFunctionDecl) resolvedReference.getParent();
-        assertEquals("FunctionReferencedFile.xq", varDecl.getContainingFile().getName());
+        XQueryFunctionDecl functionDeclaration = (XQueryFunctionDecl) resolvedReference.getParent();
+        assertEquals("FunctionReferencedFile.xq", functionDeclaration.getContainingFile().getName());
     }
 
     public void testFunctionReferenceToNotExistingFunction() {
@@ -248,8 +291,8 @@ public class XQueryFunctionReferenceTest extends XQueryBaseTestCase {
         PsiElement resolvedReference = getTargetOfReferenceAtCaret(myFixture, XQueryFunctionCall.class);
 
         assertChildOf(resolvedReference, XQueryFunctionDecl.class);
-        XQueryFunctionDecl varDecl = (XQueryFunctionDecl) resolvedReference.getParent();
-        assertEquals("FunctionReferencedFile.xq", varDecl.getContainingFile().getName());
+        XQueryFunctionDecl functionDeclaration = (XQueryFunctionDecl) resolvedReference.getParent();
+        assertEquals("FunctionReferencedFile.xq", functionDeclaration.getContainingFile().getName());
     }
 
     public void testFunctionReferenceFromAnotherFileWithoutImportedPrefix() {
@@ -259,8 +302,8 @@ public class XQueryFunctionReferenceTest extends XQueryBaseTestCase {
         PsiElement resolvedReference = getTargetOfReferenceAtCaret(myFixture, XQueryFunctionCall.class);
 
         assertChildOf(resolvedReference, XQueryFunctionDecl.class);
-        XQueryFunctionDecl varDecl = (XQueryFunctionDecl) resolvedReference.getParent();
-        assertEquals("FunctionReferencedFile.xq", varDecl.getContainingFile().getName());
+        XQueryFunctionDecl functionDeclaration = (XQueryFunctionDecl) resolvedReference.getParent();
+        assertEquals("FunctionReferencedFile.xq", functionDeclaration.getContainingFile().getName());
     }
 
     public void testFunctionReferenceFromAnotherFileWithDefaultNamespaceToFileWithDefaultNamespace() {
@@ -270,8 +313,8 @@ public class XQueryFunctionReferenceTest extends XQueryBaseTestCase {
         PsiElement resolvedReference = getTargetOfReferenceAtCaret(myFixture, XQueryFunctionCall.class);
 
         assertChildOf(resolvedReference, XQueryFunctionDecl.class);
-        XQueryFunctionDecl varDecl = (XQueryFunctionDecl) resolvedReference.getParent();
-        assertEquals("FunctionReferencedFileWithDefaultNamespace.xq", varDecl.getContainingFile().getName());
+        XQueryFunctionDecl functionDeclaration = (XQueryFunctionDecl) resolvedReference.getParent();
+        assertEquals("FunctionReferencedFileWithDefaultNamespace.xq", functionDeclaration.getContainingFile().getName());
     }
 
     public void testFunctionReferenceFromAnotherFileWithoutImportedPrefixToFileWithDefaultNamespace() {
@@ -281,8 +324,8 @@ public class XQueryFunctionReferenceTest extends XQueryBaseTestCase {
         PsiElement resolvedReference = getTargetOfReferenceAtCaret(myFixture, XQueryFunctionCall.class);
 
         assertChildOf(resolvedReference, XQueryFunctionDecl.class);
-        XQueryFunctionDecl varDecl = (XQueryFunctionDecl) resolvedReference.getParent();
-        assertEquals("FunctionReferencedFileWithDefaultNamespace.xq", varDecl.getContainingFile().getName());
+        XQueryFunctionDecl functionDeclaration = (XQueryFunctionDecl) resolvedReference.getParent();
+        assertEquals("FunctionReferencedFileWithDefaultNamespace.xq", functionDeclaration.getContainingFile().getName());
     }
 
     public void testFunctionReferenceFromAnotherFileWhichHasDefaultNamespace() {
@@ -292,7 +335,17 @@ public class XQueryFunctionReferenceTest extends XQueryBaseTestCase {
         PsiElement resolvedReference = getTargetOfReferenceAtCaret(myFixture, XQueryFunctionCall.class);
 
         assertChildOf(resolvedReference, XQueryFunctionDecl.class);
-        XQueryFunctionDecl varDecl = (XQueryFunctionDecl) resolvedReference.getParent();
-        assertEquals("FunctionReferencedFileWithDefaultNamespace.xq", varDecl.getContainingFile().getName());
+        XQueryFunctionDecl functionDeclaration = (XQueryFunctionDecl) resolvedReference.getParent();
+        assertEquals("FunctionReferencedFileWithDefaultNamespace.xq", functionDeclaration.getContainingFile().getName());
+    }
+
+    public void testFunctionReferenceWithDifferentArity() {
+        myFixture.configureByFiles("FunctionReferenceWithDifferentArity.xq");
+
+        PsiElement resolvedReference = getTargetOfReferenceAtCaret(myFixture, XQueryFunctionCall.class);
+
+        assertChildOf(resolvedReference, XQueryFunctionDecl.class);
+        XQueryFunctionDecl functionDeclaration = (XQueryFunctionDecl) resolvedReference.getParent();
+        assertEquals(2, functionDeclaration.getArity());
     }
 }
