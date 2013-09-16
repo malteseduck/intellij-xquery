@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.intellij.xquery.formatter.settings;
 
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -24,6 +25,14 @@ import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
  * Time: 19:06
  */
 public class XQueryCodeStyleSettings extends CustomCodeStyleSettings {
+    public boolean SPACE_AROUND_ASSIGNMENT_IN_PROLOG = true;
+    public boolean SPACE_AROUND_ASSIGNMENT_IN_XML_ATTRIBUTE = false;
+    public boolean SPACE_BEFORE_TYPESWITCH_PARENTHESES = true;
+    public boolean SPACE_BEFORE_TYPE_TEST_PARENTHESES = false;
+    public boolean SPACE_BEFORE_FUNCTION_DECLARATION_PARENTHESES = false;
+    public boolean SPACE_BEFORE_FUNCTION_CALL_PARENTHESES = false;
+    public boolean SPACE_AROUND_AXIS_OPERATOR = false;
+
     public XQueryCodeStyleSettings(CodeStyleSettings container) {
         super("XQueryCodeStyleSettings", container);
     }

@@ -20,96 +20,23 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import junit.framework.Assert;
 import org.intellij.xquery.XQueryBaseTestCase;
+import org.intellij.xquery.XQueryFileType;
+import org.intellij.xquery.XQueryLanguage;
+import org.intellij.xquery.formatter.settings.XQueryCodeStyleSettings;
 
 /**
  * User: ligasgr
  * Date: 22/08/13
  * Time: 23:41
  */
-public class XQueryFormattingModelBuilderTest extends XQueryBaseTestCase {
+public abstract class XQueryFormattingModelBuilderTest extends XQueryBaseTestCase {
 
-    @Override
-    protected String getTestDataPath() {
-        return "src/test/testData/org/intellij/xquery/formatter";
-    }
+    private CodeStyleSettings myTemporarySettings;
 
-    public void testSpaceAroundAssignmentOperators() {
-        getSettings().SPACE_AROUND_ASSIGNMENT_OPERATORS = false;
-        executeTest();
-    }
-
-    public void testSpaceAroundEqualityOperators() {
-        getSettings().SPACE_AROUND_EQUALITY_OPERATORS = false;
-        executeTest();
-    }
-
-    public void testSpaceAroundRelationalOperators() {
-        getSettings().SPACE_AROUND_RELATIONAL_OPERATORS = false;
-        executeTest();
-    }
-
-    public void testSpaceAroundAdditiveOperators() {
-        getSettings().SPACE_AROUND_ADDITIVE_OPERATORS = false;
-        executeTest();
-    }
-
-    public void testSpaceAroundMultiplicativeOperators() {
-        getSettings().SPACE_AROUND_MULTIPLICATIVE_OPERATORS= true;
-        executeTest();
-    }
-
-    private CodeStyleSettings getSettings() {
-        return CodeStyleSettingsManager.getSettings(getProject());
-    }
-
-    public void testSpaceBeforeAfterComma() {
-        getSettings().SPACE_BEFORE_COMMA = true;
-        getSettings().SPACE_AROUND_ASSIGNMENT_OPERATORS = true;
-        executeTest();
-    }
-
-    public void testSpaceBeforeAndAfterArgumentAndParamList() {
-        executeTest();
-    }
-
-    public void testSpaceAroundKeyword() {
-        executeTest();
-    }
-
-    public void testIndentFunctionBody() {
-        executeTest();
-    }
-
-    public void testIndentDirectXml() {
-        executeTest();
-    }
-
-    public void testIndentIfExpression() {
-        executeTest();
-    }
-
-    public void testIndentVariableValue() {
-        executeTest();
-    }
-
-    public void testIndentFunctionArgumentsAndParams() {
-        executeTest();
-    }
-
-    public void testIndentFlwor() {
-        executeTest();
-    }
-
-    public void testIndentBinaryExpressions() {
-        executeTest();
-    }
-
-    public void testIndentExpr() {
-        executeTest();
-    }
-
-    private void executeTest() {
+    void executeTest() {
         myFixture.configureByFiles(getTestName(false) + ".xq");
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
             @Override
@@ -119,4 +46,39 @@ public class XQueryFormattingModelBuilderTest extends XQueryBaseTestCase {
         });
         myFixture.checkResultByFile(getTestName(false) + "_after.xq");
     }
+
+    CommonCodeStyleSettings getSettings() {
+        return myTemporarySettings.getCommonSettings(XQueryLanguage.INSTANCE);
+    }
+
+    XQueryCodeStyleSettings getXQuerySettings() {
+        return myTemporarySettings.getCustomSettings(XQueryCodeStyleSettings.class);
+    }
+
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+        setTestStyleSettings();
+    }
+
+    @Override
+    public void tearDown() throws Exception {
+        restoreStyleSettings();
+        super.tearDown();
+    }
+
+    private void setTestStyleSettings() {
+        CodeStyleSettingsManager settingsManager = CodeStyleSettingsManager.getInstance(getProject());
+        CodeStyleSettings currSettings = settingsManager.getCurrentSettings();
+        Assert.assertNotNull(currSettings);
+        myTemporarySettings = currSettings.clone();
+        CodeStyleSettings.IndentOptions indentOptions = myTemporarySettings.getIndentOptions(XQueryFileType.INSTANCE);
+        Assert.assertNotNull(indentOptions);
+        settingsManager.setTemporarySettings(myTemporarySettings);
+    }
+
+    private void restoreStyleSettings() {
+        CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
+    }
 }
+

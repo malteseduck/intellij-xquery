@@ -239,6 +239,32 @@ public class XQueryLexerTest extends XQueryBaseTestCase {
         });
     }
 
+    public void testFunctionDeclarationWithComments() throws Exception {
+        assertProducedTokens("declare(: comment :)function (:comment:) x() {()};", new String[]{
+                "WHITE_SPACE", "",
+                "declare", "declare",
+                "ExprCommentStart", "(:",
+                "ExprCommentContent", " comment ",
+                "ExprCommentEnd", ":)",
+                "function", "function",
+                "WHITE_SPACE", " ",
+                "ExprCommentStart", "(:",
+                "ExprCommentContent", "comment",
+                "ExprCommentEnd", ":)",
+                "WHITE_SPACE", " ",
+                "NCName", "x",
+                "WHITE_SPACE", "",
+                "(", "(",
+                ")", ")",
+                "WHITE_SPACE", " ",
+                "{", "{",
+                "(", "(",
+                ")", ")",
+                "}", "}",
+                ";", ";"
+        });
+    }
+
     public void testFunctionCall() throws Exception {
         assertProducedTokens("fn:empty('')", new String[]{
                 "WHITE_SPACE", "",
@@ -676,6 +702,55 @@ public class XQueryLexerTest extends XQueryBaseTestCase {
                 ".", ".",
                 ")", ")",
                 ")", ")"
+        });
+    }
+
+    public void testDecimalSeparator() throws Exception {
+        assertProducedTokens("declare default decimal-format decimal-separator = 'ds' NaN = 'nan';", new String[] {
+                "WHITE_SPACE", "",
+                "declare", "declare",
+                "WHITE_SPACE", " ",
+                "default", "default",
+                "WHITE_SPACE", " ",
+                "decimal-format", "decimal-format",
+                "WHITE_SPACE", " ",
+                "decimal-separator", "decimal-separator",
+                "WHITE_SPACE", " ",
+                "=", "=",
+                "WHITE_SPACE", " ",
+                "StringLiteral", "'ds'",
+                "WHITE_SPACE", " ",
+                "NaN", "NaN",
+                "WHITE_SPACE", " ",
+                "=", "=",
+                "WHITE_SPACE", " ",
+                "StringLiteral", "'nan'",
+                "WHITE_SPACE", "",
+                ";", ";"
+        });
+    }
+
+    public void testValidate() throws Exception {
+        assertProducedTokens("validate {'string'}", new String[] {
+                "validate", "validate",
+                "WHITE_SPACE", " ",
+                "{", "{",
+                "WHITE_SPACE", "",
+                "StringLiteral", "'string'",
+                "}", "}",
+        });
+    }
+
+    public void testValidateLax() throws Exception {
+        assertProducedTokens("validate lax {'string'}", new String[] {
+                "validate", "validate",
+                "WHITE_SPACE", " ",
+                "lax", "lax",
+                "WHITE_SPACE", " ",
+                "{", "{",
+                "WHITE_SPACE", "",
+                "StringLiteral", "'string'",
+                "}", "}",
         });
     }
 }

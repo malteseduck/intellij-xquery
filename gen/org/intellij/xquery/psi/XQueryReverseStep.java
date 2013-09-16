@@ -29,7 +29,4 @@ public interface XQueryReverseStep extends XQueryElement {
   @Nullable
   XQueryNodeTest getNodeTest();
 
-  @Nullable
-  XQueryReverseAxis getReverseAxis();
-
 }

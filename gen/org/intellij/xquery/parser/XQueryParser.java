@@ -279,9 +279,6 @@ public class XQueryParser implements PsiParser {
     else if (root_ == FOR_CLAUSE) {
       result_ = ForClause(builder_, level_ + 1);
     }
-    else if (root_ == FORWARD_AXIS) {
-      result_ = ForwardAxis(builder_, level_ + 1);
-    }
     else if (root_ == FORWARD_STEP) {
       result_ = ForwardStep(builder_, level_ + 1);
     }
@@ -525,9 +522,6 @@ public class XQueryParser implements PsiParser {
     else if (root_ == RETURN_CLAUSE) {
       result_ = ReturnClause(builder_, level_ + 1);
     }
-    else if (root_ == REVERSE_AXIS) {
-      result_ = ReverseAxis(builder_, level_ + 1);
-    }
     else if (root_ == REVERSE_STEP) {
       result_ = ReverseStep(builder_, level_ + 1);
     }
@@ -576,8 +570,14 @@ public class XQueryParser implements PsiParser {
     else if (root_ == SWITCH_CASE_OPERAND) {
       result_ = SwitchCaseOperand(builder_, level_ + 1);
     }
+    else if (root_ == SWITCH_DEFAULT_RETURN_CLAUSE) {
+      result_ = SwitchDefaultReturnClause(builder_, level_ + 1);
+    }
     else if (root_ == SWITCH_EXPR) {
       result_ = SwitchExpr(builder_, level_ + 1);
+    }
+    else if (root_ == SWITCH_RETURN_CLAUSE) {
+      result_ = SwitchReturnClause(builder_, level_ + 1);
     }
     else if (root_ == TAG_NAME) {
       result_ = TagName(builder_, level_ + 1);
@@ -608,6 +608,9 @@ public class XQueryParser implements PsiParser {
     }
     else if (root_ == TYPED_FUNCTION_TEST) {
       result_ = TypedFunctionTest(builder_, level_ + 1);
+    }
+    else if (root_ == TYPESWITCH_DEFAULT_RETURN_CLAUSE) {
+      result_ = TypeswitchDefaultReturnClause(builder_, level_ + 1);
     }
     else if (root_ == TYPESWITCH_EXPR) {
       result_ = TypeswitchExpr(builder_, level_ + 1);
@@ -1534,7 +1537,7 @@ public class XQueryParser implements PsiParser {
   }
 
   /* ********************************************************** */
-  // "case" ("$" VarName "as")? SequenceTypeUnion "return" ExprSingle
+  // "case" ("$" VarName "as")? SequenceTypeUnion SwitchReturnClause
   public static boolean CaseClause(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "CaseClause")) return false;
     if (!nextTokenIs(builder_, K_CASE)) return false;
@@ -1546,8 +1549,7 @@ public class XQueryParser implements PsiParser {
     pinned_ = result_; // pin = 1
     result_ = result_ && report_error_(builder_, CaseClause_1(builder_, level_ + 1));
     result_ = pinned_ && report_error_(builder_, SequenceTypeUnion(builder_, level_ + 1)) && result_;
-    result_ = pinned_ && report_error_(builder_, consumeToken(builder_, K_RETURN)) && result_;
-    result_ = pinned_ && ExprSingle(builder_, level_ + 1) && result_;
+    result_ = pinned_ && SwitchReturnClause(builder_, level_ + 1) && result_;
     if (result_ || pinned_) {
       marker_.done(CASE_CLAUSE);
     }
@@ -3446,7 +3448,7 @@ public class XQueryParser implements PsiParser {
   }
 
   /* ********************************************************** */
-  // ExprSingle ("," ExprSingle)*
+  // ExprSingle ExprSingleAfterComma*
   public static boolean Expr(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "Expr")) return false;
     boolean result_ = false;
@@ -3466,12 +3468,12 @@ public class XQueryParser implements PsiParser {
     return result_ || pinned_;
   }
 
-  // ("," ExprSingle)*
+  // ExprSingleAfterComma*
   private static boolean Expr_1(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "Expr_1")) return false;
     int offset_ = builder_.getCurrentOffset();
     while (true) {
-      if (!Expr_1_0(builder_, level_ + 1)) break;
+      if (!ExprSingleAfterComma(builder_, level_ + 1)) break;
       int next_offset_ = builder_.getCurrentOffset();
       if (offset_ == next_offset_) {
         empty_element_parsed_guard_(builder_, offset_, "Expr_1");
@@ -3480,22 +3482,6 @@ public class XQueryParser implements PsiParser {
       offset_ = next_offset_;
     }
     return true;
-  }
-
-  // "," ExprSingle
-  private static boolean Expr_1_0(PsiBuilder builder_, int level_) {
-    if (!recursion_guard_(builder_, level_, "Expr_1_0")) return false;
-    boolean result_ = false;
-    Marker marker_ = builder_.mark();
-    result_ = consumeToken(builder_, COMMA);
-    result_ = result_ && ExprSingle(builder_, level_ + 1);
-    if (!result_) {
-      marker_.rollbackTo();
-    }
-    else {
-      marker_.drop();
-    }
-    return result_;
   }
 
   /* ********************************************************** */
@@ -3531,6 +3517,28 @@ public class XQueryParser implements PsiParser {
     }
     result_ = exitErrorRecordingSection(builder_, level_, result_, false, _SECTION_GENERAL_, null);
     return result_;
+  }
+
+  /* ********************************************************** */
+  // "," ExprSingle
+  static boolean ExprSingleAfterComma(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "ExprSingleAfterComma")) return false;
+    if (!nextTokenIs(builder_, COMMA)) return false;
+    boolean result_ = false;
+    boolean pinned_ = false;
+    Marker marker_ = builder_.mark();
+    enterErrorRecordingSection(builder_, level_, _SECTION_GENERAL_, null);
+    result_ = consumeToken(builder_, COMMA);
+    pinned_ = result_; // pin = 1
+    result_ = result_ && ExprSingle(builder_, level_ + 1);
+    if (!result_ && !pinned_) {
+      marker_.rollbackTo();
+    }
+    else {
+      marker_.drop();
+    }
+    result_ = exitErrorRecordingSection(builder_, level_, result_, pinned_, _SECTION_GENERAL_, null);
+    return result_ || pinned_;
   }
 
   /* ********************************************************** */
@@ -3784,11 +3792,10 @@ public class XQueryParser implements PsiParser {
   //  | ("descendant-or-self" "::")
   //  | ("following-sibling" "::")
   //  | ("following" "::")
-  public static boolean ForwardAxis(PsiBuilder builder_, int level_) {
+  static boolean ForwardAxis(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "ForwardAxis")) return false;
     boolean result_ = false;
     Marker marker_ = builder_.mark();
-    enterErrorRecordingSection(builder_, level_, _SECTION_GENERAL_, "<forward axis>");
     result_ = ForwardAxis_0(builder_, level_ + 1);
     if (!result_) result_ = ForwardAxis_1(builder_, level_ + 1);
     if (!result_) result_ = ForwardAxis_2(builder_, level_ + 1);
@@ -3796,13 +3803,12 @@ public class XQueryParser implements PsiParser {
     if (!result_) result_ = ForwardAxis_4(builder_, level_ + 1);
     if (!result_) result_ = ForwardAxis_5(builder_, level_ + 1);
     if (!result_) result_ = ForwardAxis_6(builder_, level_ + 1);
-    if (result_) {
-      marker_.done(FORWARD_AXIS);
-    }
-    else {
+    if (!result_) {
       marker_.rollbackTo();
     }
-    result_ = exitErrorRecordingSection(builder_, level_, result_, false, _SECTION_GENERAL_, null);
+    else {
+      marker_.drop();
+    }
     return result_;
   }
 
@@ -6175,17 +6181,21 @@ public class XQueryParser implements PsiParser {
     if (!recursion_guard_(builder_, level_, "ParenthesizedExpr")) return false;
     if (!nextTokenIs(builder_, L_PAR)) return false;
     boolean result_ = false;
+    boolean pinned_ = false;
     Marker marker_ = builder_.mark();
+    enterErrorRecordingSection(builder_, level_, _SECTION_GENERAL_, null);
     result_ = consumeToken(builder_, L_PAR);
-    result_ = result_ && ParenthesizedExpr_1(builder_, level_ + 1);
-    result_ = result_ && consumeToken(builder_, R_PAR);
-    if (result_) {
+    pinned_ = result_; // pin = 1
+    result_ = result_ && report_error_(builder_, ParenthesizedExpr_1(builder_, level_ + 1));
+    result_ = pinned_ && consumeToken(builder_, R_PAR) && result_;
+    if (result_ || pinned_) {
       marker_.done(PARENTHESIZED_EXPR);
     }
     else {
       marker_.rollbackTo();
     }
-    return result_;
+    result_ = exitErrorRecordingSection(builder_, level_, result_, pinned_, _SECTION_GENERAL_, null);
+    return result_ || pinned_;
   }
 
   // Expr?
@@ -6997,23 +7007,21 @@ public class XQueryParser implements PsiParser {
   //  | ("preceding-sibling" "::")
   //  | ("preceding" "::")
   //  | ("ancestor-or-self" "::")
-  public static boolean ReverseAxis(PsiBuilder builder_, int level_) {
+  static boolean ReverseAxis(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "ReverseAxis")) return false;
     boolean result_ = false;
     Marker marker_ = builder_.mark();
-    enterErrorRecordingSection(builder_, level_, _SECTION_GENERAL_, "<reverse axis>");
     result_ = ReverseAxis_0(builder_, level_ + 1);
     if (!result_) result_ = ReverseAxis_1(builder_, level_ + 1);
     if (!result_) result_ = ReverseAxis_2(builder_, level_ + 1);
     if (!result_) result_ = ReverseAxis_3(builder_, level_ + 1);
     if (!result_) result_ = ReverseAxis_4(builder_, level_ + 1);
-    if (result_) {
-      marker_.done(REVERSE_AXIS);
-    }
-    else {
+    if (!result_) {
       marker_.rollbackTo();
     }
-    result_ = exitErrorRecordingSection(builder_, level_, result_, false, _SECTION_GENERAL_, null);
+    else {
+      marker_.drop();
+    }
     return result_;
   }
 
@@ -7723,15 +7731,14 @@ public class XQueryParser implements PsiParser {
   }
 
   /* ********************************************************** */
-  // ("case" SwitchCaseOperand)+ "return" ExprSingle
+  // ("case" SwitchCaseOperand)+ SwitchReturnClause
   public static boolean SwitchCaseClause(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "SwitchCaseClause")) return false;
     if (!nextTokenIs(builder_, K_CASE)) return false;
     boolean result_ = false;
     Marker marker_ = builder_.mark();
     result_ = SwitchCaseClause_0(builder_, level_ + 1);
-    result_ = result_ && consumeToken(builder_, K_RETURN);
-    result_ = result_ && ExprSingle(builder_, level_ + 1);
+    result_ = result_ && SwitchReturnClause(builder_, level_ + 1);
     if (result_) {
       marker_.done(SWITCH_CASE_CLAUSE);
     }
@@ -7801,7 +7808,29 @@ public class XQueryParser implements PsiParser {
   }
 
   /* ********************************************************** */
-  // "switch" "(" Expr ")" SwitchCaseClause+ "default" "return" ExprSingle
+  // "default" SwitchReturnClause
+  public static boolean SwitchDefaultReturnClause(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "SwitchDefaultReturnClause")) return false;
+    if (!nextTokenIs(builder_, K_DEFAULT)) return false;
+    boolean result_ = false;
+    boolean pinned_ = false;
+    Marker marker_ = builder_.mark();
+    enterErrorRecordingSection(builder_, level_, _SECTION_GENERAL_, null);
+    result_ = consumeToken(builder_, K_DEFAULT);
+    pinned_ = result_; // pin = 1
+    result_ = result_ && SwitchReturnClause(builder_, level_ + 1);
+    if (result_ || pinned_) {
+      marker_.done(SWITCH_DEFAULT_RETURN_CLAUSE);
+    }
+    else {
+      marker_.rollbackTo();
+    }
+    result_ = exitErrorRecordingSection(builder_, level_, result_, pinned_, _SECTION_GENERAL_, null);
+    return result_ || pinned_;
+  }
+
+  /* ********************************************************** */
+  // "switch" "(" Expr ")" SwitchCaseClause+ SwitchDefaultReturnClause
   public static boolean SwitchExpr(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "SwitchExpr")) return false;
     if (!nextTokenIs(builder_, K_SWITCH)) return false;
@@ -7815,9 +7844,7 @@ public class XQueryParser implements PsiParser {
     result_ = pinned_ && report_error_(builder_, Expr(builder_, level_ + 1)) && result_;
     result_ = pinned_ && report_error_(builder_, consumeToken(builder_, R_PAR)) && result_;
     result_ = pinned_ && report_error_(builder_, SwitchExpr_4(builder_, level_ + 1)) && result_;
-    result_ = pinned_ && report_error_(builder_, consumeToken(builder_, K_DEFAULT)) && result_;
-    result_ = pinned_ && report_error_(builder_, consumeToken(builder_, K_RETURN)) && result_;
-    result_ = pinned_ && ExprSingle(builder_, level_ + 1) && result_;
+    result_ = pinned_ && SwitchDefaultReturnClause(builder_, level_ + 1) && result_;
     if (result_ || pinned_) {
       marker_.done(SWITCH_EXPR);
     }
@@ -7849,6 +7876,24 @@ public class XQueryParser implements PsiParser {
     }
     else {
       marker_.drop();
+    }
+    return result_;
+  }
+
+  /* ********************************************************** */
+  // "return" ExprSingle
+  public static boolean SwitchReturnClause(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "SwitchReturnClause")) return false;
+    if (!nextTokenIs(builder_, K_RETURN)) return false;
+    boolean result_ = false;
+    Marker marker_ = builder_.mark();
+    result_ = consumeToken(builder_, K_RETURN);
+    result_ = result_ && ExprSingle(builder_, level_ + 1);
+    if (result_) {
+      marker_.done(SWITCH_RETURN_CLAUSE);
+    }
+    else {
+      marker_.rollbackTo();
     }
     return result_;
   }
@@ -8180,7 +8225,53 @@ public class XQueryParser implements PsiParser {
   }
 
   /* ********************************************************** */
-  // "typeswitch" "(" Expr ")" CaseClause+ "default" ("$" VarName)? "return" ExprSingle
+  // "default" ("$" VarName)? SwitchReturnClause
+  public static boolean TypeswitchDefaultReturnClause(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "TypeswitchDefaultReturnClause")) return false;
+    if (!nextTokenIs(builder_, K_DEFAULT)) return false;
+    boolean result_ = false;
+    boolean pinned_ = false;
+    Marker marker_ = builder_.mark();
+    enterErrorRecordingSection(builder_, level_, _SECTION_GENERAL_, null);
+    result_ = consumeToken(builder_, K_DEFAULT);
+    pinned_ = result_; // pin = 1
+    result_ = result_ && report_error_(builder_, TypeswitchDefaultReturnClause_1(builder_, level_ + 1));
+    result_ = pinned_ && SwitchReturnClause(builder_, level_ + 1) && result_;
+    if (result_ || pinned_) {
+      marker_.done(TYPESWITCH_DEFAULT_RETURN_CLAUSE);
+    }
+    else {
+      marker_.rollbackTo();
+    }
+    result_ = exitErrorRecordingSection(builder_, level_, result_, pinned_, _SECTION_GENERAL_, null);
+    return result_ || pinned_;
+  }
+
+  // ("$" VarName)?
+  private static boolean TypeswitchDefaultReturnClause_1(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "TypeswitchDefaultReturnClause_1")) return false;
+    TypeswitchDefaultReturnClause_1_0(builder_, level_ + 1);
+    return true;
+  }
+
+  // "$" VarName
+  private static boolean TypeswitchDefaultReturnClause_1_0(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "TypeswitchDefaultReturnClause_1_0")) return false;
+    boolean result_ = false;
+    Marker marker_ = builder_.mark();
+    result_ = consumeToken(builder_, DOLLAR_SIGN);
+    result_ = result_ && VarName(builder_, level_ + 1);
+    if (!result_) {
+      marker_.rollbackTo();
+    }
+    else {
+      marker_.drop();
+    }
+    return result_;
+  }
+
+  /* ********************************************************** */
+  // "typeswitch" "(" Expr ")" CaseClause+ TypeswitchDefaultReturnClause
   public static boolean TypeswitchExpr(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "TypeswitchExpr")) return false;
     if (!nextTokenIs(builder_, K_TYPESWITCH)) return false;
@@ -8194,10 +8285,7 @@ public class XQueryParser implements PsiParser {
     result_ = pinned_ && report_error_(builder_, Expr(builder_, level_ + 1)) && result_;
     result_ = pinned_ && report_error_(builder_, consumeToken(builder_, R_PAR)) && result_;
     result_ = pinned_ && report_error_(builder_, TypeswitchExpr_4(builder_, level_ + 1)) && result_;
-    result_ = pinned_ && report_error_(builder_, consumeToken(builder_, K_DEFAULT)) && result_;
-    result_ = pinned_ && report_error_(builder_, TypeswitchExpr_6(builder_, level_ + 1)) && result_;
-    result_ = pinned_ && report_error_(builder_, consumeToken(builder_, K_RETURN)) && result_;
-    result_ = pinned_ && ExprSingle(builder_, level_ + 1) && result_;
+    result_ = pinned_ && TypeswitchDefaultReturnClause(builder_, level_ + 1) && result_;
     if (result_ || pinned_) {
       marker_.done(TYPESWITCH_EXPR);
     }
@@ -8224,29 +8312,6 @@ public class XQueryParser implements PsiParser {
       }
       offset_ = next_offset_;
     }
-    if (!result_) {
-      marker_.rollbackTo();
-    }
-    else {
-      marker_.drop();
-    }
-    return result_;
-  }
-
-  // ("$" VarName)?
-  private static boolean TypeswitchExpr_6(PsiBuilder builder_, int level_) {
-    if (!recursion_guard_(builder_, level_, "TypeswitchExpr_6")) return false;
-    TypeswitchExpr_6_0(builder_, level_ + 1);
-    return true;
-  }
-
-  // "$" VarName
-  private static boolean TypeswitchExpr_6_0(PsiBuilder builder_, int level_) {
-    if (!recursion_guard_(builder_, level_, "TypeswitchExpr_6_0")) return false;
-    boolean result_ = false;
-    Marker marker_ = builder_.mark();
-    result_ = consumeToken(builder_, DOLLAR_SIGN);
-    result_ = result_ && VarName(builder_, level_ + 1);
     if (!result_) {
       marker_.rollbackTo();
     }

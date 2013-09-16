@@ -91,10 +91,11 @@ public class XQueryFormattingBlock extends AbstractBlock {
         IElementType type = myNode.getElementType();
         ASTNode parent = myNode.getTreeParent();
         IElementType parentType = parent != null ? parent.getElementType() : null;
+        IElementType prevType = getTypeOfPreviousElement(myNode);
 
         if (parent == null)
             return Indent.getNoneIndent();
-        if (isFunctionBody(type, parentType) || isXmlChild(type) || isForOrLetBinding(parentType))
+        if (isExpressionAfterBrace(type, prevType) || isExpressionAfterParenthesis(type, prevType) || isXmlChild(type) || isForOrLetBinding(parentType))
             return Indent.getNormalIndent();
         if (isASingleExpression()) {
             if (parentType == IF_EXPR) {
@@ -103,46 +104,47 @@ public class XQueryFormattingBlock extends AbstractBlock {
             if (parentType == WHERE_CLAUSE ||
                     parentType == RETURN_CLAUSE ||
                     parentType == VAR_VALUE ||
-                    parentType == ORDER_SPEC) {
+                    parentType == ORDER_SPEC ||
+                    parentType == SWITCH_RETURN_CLAUSE) {
                 return Indent.getNormalIndent();
             }
         }
-        if (isParenthesizedList(parentType) && (type != L_PAR && type != R_PAR)) {
+        if (type == SWITCH_RETURN_CLAUSE || type == SWITCH_DEFAULT_RETURN_CLAUSE || type == TYPESWITCH_DEFAULT_RETURN_CLAUSE || type == CASE_CLAUSE || type == SWITCH_CASE_CLAUSE) {
+            return Indent.getNormalIndent();
+        }
+        if (isParamOrArgumentList(parentType) && (type != L_PAR && type != R_PAR)) {
             return Indent.getContinuationIndent();
         }
         if (isChildOfSingleExpression()) {
-            IElementType prevType = getTypeOfPreviousElement(myNode);
             if (BIN_OPERATORS.contains(type) || BIN_OPERATORS.contains(prevType)) {
                 return Indent.getContinuationIndent();
             }
         }
-        if (isChildOfExpressionList()) {
-            IElementType prevType = getTypeOfPreviousElement(myNode);
-            if (type == COMMA || prevType == COMMA) {
-                return Indent.getContinuationIndent();
-            }
-        }
-
         return Indent.getNoneIndent();
+    }
+
+    private boolean isExpressionAfterBrace(IElementType type, IElementType typeOfPreviousElement) {
+        return (type == EXPR || type == CONTENT_EXPR) && typeOfPreviousElement == L_C_BRACE;
+    }
+
+    private boolean isExpressionAfterParenthesis(IElementType type, IElementType typeOfPreviousElement) {
+        return type == EXPR && typeOfPreviousElement == L_PAR;
     }
 
     @NotNull
     @Override
     public ChildAttributes getChildAttributes(int newChildIndex) {
         IElementType type = myNode.getElementType();
-        Indent childIndent = calculateChildIndent(type, newChildIndex);
+        Indent childIndent = calculateChildIndent(type);
         if (childIndent == null && newChildIndex > 0) {
             IElementType calculatedType = getIElementType(newChildIndex);
-            childIndent = calculateChildIndent(calculatedType, newChildIndex);
+            childIndent = calculateChildIndent(calculatedType);
         }
         return new ChildAttributes(childIndent != null ? childIndent : Indent.getNoneIndent(), null);
     }
 
-    private Indent calculateChildIndent(IElementType type, int newChildIndex) {
-        if (type == COMMA && newChildIndex > 0) {
-            return Indent.getContinuationIndent();
-        }
-        if (type == ENCLOSED_EXPR || type == FUNCTION_DECL || type == FLWOR_EXPR)
+    private Indent calculateChildIndent(IElementType type) {
+        if (type == ENCLOSED_EXPR || type == FUNCTION_DECL || type == FLWOR_EXPR || type == PARENTHESIZED_EXPR)
             return Indent.getNormalIndent();
         return null;
     }
@@ -157,15 +159,11 @@ public class XQueryFormattingBlock extends AbstractBlock {
         return prevType;
     }
 
-    private boolean isChildOfExpressionList() {
-        return myNode.getPsi().getParent() instanceof XQueryExpr;
-    }
-
     private boolean isChildOfSingleExpression() {
         return myNode.getPsi().getParent() instanceof XQueryExprSingle;
     }
 
-    private boolean isParenthesizedList(IElementType parentType) {
+    private boolean isParamOrArgumentList(IElementType parentType) {
         return parentType == PARAM_LIST || parentType == ARGUMENT_LIST;
     }
 
@@ -176,11 +174,6 @@ public class XQueryFormattingBlock extends AbstractBlock {
     private boolean isXmlChild(IElementType type) {
         return type == DIR_ELEM_CONTENT;
     }
-
-    private boolean isFunctionBody(IElementType type, IElementType parentType) {
-        return type == EXPR && parentType == ENCLOSED_EXPR;
-    }
-
 
     @Nullable
     private IElementType getIElementType(int newChildIndex) {

@@ -39,15 +39,15 @@ public class XQuerySwitchExprImpl extends XQueryExprSingleImpl implements XQuery
   }
 
   @Override
-  @Nullable
-  public XQueryExprSingle getExprSingle() {
-    return findChildByClass(XQueryExprSingle.class);
-  }
-
-  @Override
   @NotNull
   public List<XQuerySwitchCaseClause> getSwitchCaseClauseList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, XQuerySwitchCaseClause.class);
+  }
+
+  @Override
+  @Nullable
+  public XQuerySwitchDefaultReturnClause getSwitchDefaultReturnClause() {
+    return findChildByClass(XQuerySwitchDefaultReturnClause.class);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
