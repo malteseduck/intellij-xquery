@@ -24,6 +24,6 @@ import com.intellij.psi.PsiElement;
 public interface XQueryRangeExpr extends XQueryExprSingle {
 
   @NotNull
-  List<XQueryAdditiveExpr> getAdditiveExprList();
+  List<XQueryExprSingle> getExprSingleList();
 
 }

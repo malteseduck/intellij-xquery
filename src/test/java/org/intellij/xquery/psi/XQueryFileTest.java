@@ -16,7 +16,6 @@
 
 package org.intellij.xquery.psi;
 
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import org.intellij.xquery.XQueryBaseTestCase;
 
 import java.util.Collection;
@@ -166,5 +165,11 @@ public class XQueryFileTest extends XQueryBaseTestCase {
 
         assertEquals(1, results.size());
         assertEquals("aaa", results.iterator().next().getNamespaceName().getText());
+    }
+
+    public void testGetContextItem() {
+        XQueryFile file = XQueryElementFactory.createFile(getProject(), "declare context item := ();");
+
+        assertNotNull(file.getContextItem());
     }
 }

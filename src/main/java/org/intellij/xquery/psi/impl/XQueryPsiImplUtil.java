@@ -42,6 +42,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+import static org.intellij.xquery.util.StringUtils.EMPTY;
+import static org.intellij.xquery.util.StringUtils.removeQuotOrApos;
+
 /**
  * User: ligasgr
  * Date: 10/02/13
@@ -67,7 +70,6 @@ public class XQueryPsiImplUtil {
     public static PsiElement getNameIdentifier(XQueryNamespaceName element) {
         return element;
     }
-
 
     public static PsiReference getReference(XQueryVarRef element) {
         int localNameOffset = DOLLAR_CHAR_LENGTH;
@@ -282,7 +284,8 @@ public class XQueryPsiImplUtil {
         ASTNode next = node.getTreeNext();
         parentNode.removeChild(node);
         if (prev == null || prev.getElementType() == TokenType.WHITE_SPACE) {
-            while (next != null && (next.getElementType() == TokenType.WHITE_SPACE || next.getElementType() == XQueryTypes.SEPARATOR)) {
+            while (next != null && (next.getElementType() == TokenType.WHITE_SPACE || next.getElementType() ==
+                    XQueryTypes.SEPARATOR)) {
                 parentNode.removeChild(next);
                 next = node.getTreeNext();
             }
@@ -305,5 +308,31 @@ public class XQueryPsiImplUtil {
                 return false;
         }
         return result;
+    }
+
+    public static boolean isExternal(XQueryVarDecl variableDeclaration) {
+        return variableDeclaration.getExternalVarPart() != null;
+    }
+
+    public static String getNamespace(XQueryModuleDecl moduleDecl) {
+        if (moduleDecl.getURILiteral() != null) {
+            return removeQuotOrApos(moduleDecl.getURILiteral().getText());
+        }
+        return EMPTY;
+    }
+
+    public static String getNamespace(XQueryModuleImport moduleImport) {
+        if (moduleImport.getModuleImportNamespace() != null) {
+            return removeQuotOrApos(moduleImport.getModuleImportNamespace().getModuleImportPath().getURILiteral()
+                    .getText());
+        }
+        return EMPTY;
+    }
+
+    public static String getNamespace(XQueryNamespaceDecl namespaceDecl) {
+        if (namespaceDecl.getURILiteral() != null) {
+            return removeQuotOrApos(namespaceDecl.getURILiteral().getText());
+        }
+        return EMPTY;
     }
 }

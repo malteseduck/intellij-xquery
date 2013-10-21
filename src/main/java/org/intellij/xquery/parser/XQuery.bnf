@@ -221,6 +221,7 @@
   extends(".+Expr")=ExprSingle
   implements("NamespaceName|VarName|FunctionName")="org.intellij.xquery.psi.XQueryNamedElement"
   implements("NamedFunctionRef|FunctionCall")="org.intellij.xquery.psi.XQueryFunctionInvocation"
+  implements("ModuleDecl|ModuleImport|NamespaceDecl")="org.intellij.xquery.psi.XQueryNamespaceSource"
   extends("NamespaceName|VarName|FunctionName")="org.intellij.xquery.psi.impl.XQueryNamedElementImpl"
 }
 
@@ -233,7 +234,7 @@ VersionDeclEncoding ::= "encoding" StringLiteral {pin=1}
 VersionDeclVersion ::= "version" StringLiteral ("encoding" StringLiteral)? {pin=1}
 MainModule	   ::=   	Prolog QueryBody {pin=1}
 LibraryModule	   ::=   	ModuleDecl Prolog {pin=1}
-ModuleDecl	   ::=   	"module" "namespace" NamespaceName "=" URILiteral Separator {pin=1 recoverUntil=ModuleDeclRecover}
+ModuleDecl	   ::=   	"module" "namespace" NamespaceName "=" URILiteral Separator {pin=1 recoverUntil=ModuleDeclRecover methods=[getNamespace]}
 NamespaceName ::= NCName  {methods=[getName setName getNameIdentifier delete]}
 private ModuleDeclRecover ::= !('declare' | 'import')
 Prolog	   ::=   	FirstDecl* SecondDecl* {methods=[processDeclarations]} //{recoverUntil=PrologRecover}
@@ -254,17 +255,18 @@ DecimalFormatDecl	   ::=   	"declare" (("decimal-format" EQName) | ("default" "d
 DFPropertyName	   ::=   	"decimal-separator" | "grouping-separator" | "infinity" | "minus-sign" | "NaN" | "percent" | "per-mille" | "zero-digit" | "digit" | "pattern-separator"
 Import	   ::=   	SchemaImport | ModuleImport
 SchemaImport	   ::=   	"import" "schema" (("namespace" NamespaceName "=") | ("default" "element" "namespace"))? URILiteral ("at" URILiteral ("," URILiteral)*)? Separator {pin=2}
-ModuleImport	   ::=   	"import" "module" ("namespace" NamespaceName "=")? ModuleImportNamespace ("at" ModuleImportPath ("," ModuleImportPath)*)? Separator {pin=2}
+ModuleImport	   ::=   	"import" "module" ("namespace" NamespaceName "=")? ModuleImportNamespace ("at" ModuleImportPath ("," ModuleImportPath)*)? Separator {pin=2 methods=[getNamespace]}
 ModuleImportNamespace ::= ModuleImportPath
 ModuleImportPath ::= URILiteral {methods=[getReference]}
-NamespaceDecl	   ::=   	"declare" "namespace" NamespaceName "=" URILiteral Separator {pin=2}
+NamespaceDecl	   ::=   	"declare" "namespace" NamespaceName "=" URILiteral Separator {pin=2 methods=[getNamespace]}
 DefaultNamespaceDecl	   ::=   	(DefaultFunctionNamespaceDecl | DefaultElementNamespaceDecl) Separator
 DefaultFunctionNamespaceDecl	   ::=   	"declare" "default" "function" "namespace" URILiteral {pin=3}
 DefaultElementNamespaceDecl	   ::=   	"declare" "default" "element" "namespace" URILiteral {pin=3}
 private AnnotatedDecl	   ::=   (VarDecl | FunctionDecl) Separator {pin=1}
 Annotation	   ::=   	"%" AnnotationName ("(" Literal ("," Literal)* ")")?
 AnnotationName   ::= EQName
-VarDecl	   ::=   	"declare" Annotation* "variable" "$" VarName TypeDeclaration? ((":=" VarValue) | ("external" (":=" VarDefaultValue)?)) {pin=3 methods=[getPresentation]}
+VarDecl	   ::=   	"declare" Annotation* "variable" "$" VarName TypeDeclaration? ((":=" VarValue) | ExternalVarPart) {pin=3 methods=[getPresentation isExternal]}
+ExternalVarPart ::= "external" (":=" VarDefaultValue)?
 VarValue	   ::=   	ExprSingle
 VarDefaultValue	   ::=   	ExprSingle
 ContextItemDecl	   ::=   	"declare" "context" "item" ("as" ItemType)? ((":=" VarValue) | ("external" (":=" VarDefaultValue)?)) Separator {pin=2}
@@ -470,7 +472,8 @@ TypeDeclaration	   ::=   	"as" SequenceType
 SequenceType	   ::=   	("empty-sequence" "(" ")")
  | (ItemType OccurrenceIndicator?)
 OccurrenceIndicator	   ::=   	"?" | "*" | "+"	/* xgc: occurrence-indicators */
-ItemType	   ::=   	KindTest | ("item" "(" ")") | FunctionTest | AtomicOrUnionType | ParenthesizedItemType
+ItemType	   ::=   	KindTest | GeneralItemType | FunctionTest | AtomicOrUnionType | ParenthesizedItemType
+GeneralItemType ::= "item" "(" ")" {pin=2}
 AtomicOrUnionType	   ::=   	EQName
 KindTest	   ::=   	DocumentTest
  | ElementTest
@@ -483,20 +486,20 @@ KindTest	   ::=   	DocumentTest
  | TextTest
  | NamespaceNodeTest
  | AnyKindTest
-AnyKindTest	   ::=   	"node" "(" ")"
-DocumentTest	   ::=   	"document-node" "(" (ElementTest | SchemaElementTest)? ")"
-TextTest	   ::=   	"text" "(" ")"
-CommentTest	   ::=   	"comment" "(" ")"
-NamespaceNodeTest	   ::=   	"namespace-node" "(" ")"
-PITest	   ::=   	"processing-instruction" "(" (NCName | StringLiteral)? ")"
-AttributeTest	   ::=   	"attribute" "(" (AttribNameOrWildcard ("," TypeName)?)? ")"
+AnyKindTest	   ::=   	"node" "(" ")" {pin=2}
+DocumentTest	   ::=   	"document-node" "(" (ElementTest | SchemaElementTest)? ")" {pin=2}
+TextTest	   ::=   	"text" "(" ")" {pin=2}
+CommentTest	   ::=   	"comment" "(" ")" {pin=2}
+NamespaceNodeTest	   ::=   	"namespace-node" "(" ")" {pin=2}
+PITest	   ::=   	"processing-instruction" "(" (NCName | StringLiteral)? ")" {pin=2}
+AttributeTest	   ::=   	"attribute" "(" (AttribNameOrWildcard ("," TypeName)?)? ")" {pin=2}
 AttribNameOrWildcard	   ::=   	AttributeName | "*"
-SchemaAttributeTest	   ::=   	"schema-attribute" "(" AttributeDeclaration ")"
+SchemaAttributeTest	   ::=   	"schema-attribute" "(" AttributeDeclaration ")" {pin=2}
 AttributeDeclaration	   ::=   	AttributeName
-ElementTest	   ::=   	"element" "(" (ElementNameOrWildcard ("," TypeName "?"?)?)? ")"
+ElementTest	   ::=   	"element" "(" (ElementNameOrWildcard ("," TypeName "?"?)?)? ")" {pin=2}
 ElementNameOrWildcard	   ::=   	ElementName | "*"
-MapTest         ::=     "map" "(" ("*"| (AtomicOrUnionType "," SequenceType)) ")"
-SchemaElementTest	   ::=   	"schema-element" "(" ElementDeclaration ")"
+MapTest         ::=     "map" "(" ("*"| (AtomicOrUnionType "," SequenceType)) ")" {pin=2}
+SchemaElementTest	   ::=   	"schema-element" "(" ElementDeclaration ")" {pin=2}
 ElementDeclaration	   ::=   	ElementName
 AttributeName	   ::=   	EQName
 ElementName	   ::=   	EQName
@@ -504,8 +507,8 @@ SimpleTypeName	   ::=   	TypeName
 TypeName	   ::=   	EQName
 FunctionTest	   ::=   	Annotation* (AnyFunctionTest
  | TypedFunctionTest)
-AnyFunctionTest	   ::=   	"function" "(" "*" ")"
-TypedFunctionTest	   ::=   	"function" "(" (SequenceType ("," SequenceType)*)? ")" "as" SequenceType
+AnyFunctionTest	   ::=   	"function" "(" "*" ")"      {pin=3}
+TypedFunctionTest	   ::=   	"function" "(" (SequenceType ("," SequenceType)*)? ")" "as" SequenceType {pin=4}
 ParenthesizedItemType	   ::=   	"(" ItemType ")"
 URILiteral	   ::=   	StringLiteral
 private EQName	   ::=   	QName | URIQualifiedName

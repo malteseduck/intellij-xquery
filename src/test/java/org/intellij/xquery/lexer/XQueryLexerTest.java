@@ -17,8 +17,6 @@
 package org.intellij.xquery.lexer;
 
 import com.intellij.lexer.Lexer;
-import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import org.intellij.xquery.XQueryBaseTestCase;
 import org.jetbrains.annotations.NonNls;
 
@@ -115,7 +113,8 @@ public class XQueryLexerTest extends XQueryBaseTestCase {
     }
 
     public void testFlworExpression() throws Exception {
-        assertProducedTokens("for $i in 1 to 10 let $j := 'no. ' || $i order by $i ascending, $j descending return $j", new String[]{
+        assertProducedTokens("for $i in 1 to 10 let $j := 'no. ' || $i order by $i ascending, " +
+                "$j descending return $j", new String[]{
                 "for", "for",
                 "WHITE_SPACE", " ",
                 "$", "$",
@@ -670,7 +669,7 @@ public class XQueryLexerTest extends XQueryBaseTestCase {
     }
 
     public void testSimpleMapOperator() throws Exception {
-        assertProducedTokens("avg( //employee / salary ! translate(., '$','') ! number(.))", new String[] {
+        assertProducedTokens("avg( //employee / salary ! translate(., '$','') ! number(.))", new String[]{
                 "WHITE_SPACE", "",
                 "NCName", "avg",
                 "(", "(",
@@ -706,7 +705,7 @@ public class XQueryLexerTest extends XQueryBaseTestCase {
     }
 
     public void testDecimalSeparator() throws Exception {
-        assertProducedTokens("declare default decimal-format decimal-separator = 'ds' NaN = 'nan';", new String[] {
+        assertProducedTokens("declare default decimal-format decimal-separator = 'ds' NaN = 'nan';", new String[]{
                 "WHITE_SPACE", "",
                 "declare", "declare",
                 "WHITE_SPACE", " ",
@@ -731,18 +730,18 @@ public class XQueryLexerTest extends XQueryBaseTestCase {
     }
 
     public void testValidate() throws Exception {
-        assertProducedTokens("validate {'string'}", new String[] {
+        assertProducedTokens("validate {'string'}", new String[]{
                 "validate", "validate",
                 "WHITE_SPACE", " ",
                 "{", "{",
                 "WHITE_SPACE", "",
                 "StringLiteral", "'string'",
-                "}", "}",
+                "}", "}"
         });
     }
 
     public void testValidateLax() throws Exception {
-        assertProducedTokens("validate lax {'string'}", new String[] {
+        assertProducedTokens("validate lax {'string'}", new String[]{
                 "validate", "validate",
                 "WHITE_SPACE", " ",
                 "lax", "lax",
@@ -750,7 +749,193 @@ public class XQueryLexerTest extends XQueryBaseTestCase {
                 "{", "{",
                 "WHITE_SPACE", "",
                 "StringLiteral", "'string'",
-                "}", "}",
+                "}", "}"
+        });
+    }
+
+    public void testContextItemAs() throws Exception {
+        assertProducedTokens("declare context item as item() external;", new String[]{
+                "WHITE_SPACE", "",
+                "declare", "declare",
+                "WHITE_SPACE", " ",
+                "context", "context",
+                "WHITE_SPACE", " ",
+                "item", "item",
+                "WHITE_SPACE", " ",
+                "as", "as",
+                "WHITE_SPACE", " ",
+                "item", "item",
+                "WHITE_SPACE", "",
+                "(", "(",
+                ")", ")",
+                "WHITE_SPACE", " ",
+                "external", "external",
+                ";", ";"
+        });
+    }
+
+    public void testContextItemExternal() throws Exception {
+        assertProducedTokens("declare context item external;", new String[]{
+                "WHITE_SPACE", "",
+                "declare", "declare",
+                "WHITE_SPACE", " ",
+                "context", "context",
+                "WHITE_SPACE", " ",
+                "item", "item",
+                "WHITE_SPACE", " ",
+                "external", "external",
+                "WHITE_SPACE", "",
+                ";", ";"
+        });
+    }
+
+    public void testContextItemWithValue() throws Exception {
+        assertProducedTokens("declare context item := ();", new String[]{
+                "WHITE_SPACE", "",
+                "declare", "declare",
+                "WHITE_SPACE", " ",
+                "context", "context",
+                "WHITE_SPACE", " ",
+                "item", "item",
+                "WHITE_SPACE", " ",
+                ":=", ":=",
+                "WHITE_SPACE", " ",
+                "(", "(",
+                ")", ")",
+                ";", ";"
+        });
+    }
+
+    public void testContextItemWithDefaultValue() throws Exception {
+        assertProducedTokens("declare context item external := ();", new String[]{
+                "WHITE_SPACE", "",
+                "declare", "declare",
+                "WHITE_SPACE", " ",
+                "context", "context",
+                "WHITE_SPACE", " ",
+                "item", "item",
+                "WHITE_SPACE", " ",
+                "external", "external",
+                "WHITE_SPACE", " ",
+                ":=", ":=",
+                "WHITE_SPACE", " ",
+                "(", "(",
+                ")", ")",
+                ";", ";"
+        });
+    }
+
+    public void testItemType() throws Exception {
+        assertProducedTokens("declare variable $item as item() external;", new String[]{
+                "WHITE_SPACE", "",
+                "declare", "declare",
+                "WHITE_SPACE", " ",
+                "variable", "variable",
+                "WHITE_SPACE", " ",
+                "$", "$",
+                "NCName", "item",
+                "WHITE_SPACE", " ",
+                "as", "as",
+                "WHITE_SPACE", " ",
+                "item", "item",
+                "(", "(",
+                ")", ")",
+                "WHITE_SPACE", " ",
+                "external", "external",
+                ";", ";"
+        });
+    }
+
+    public void testItemTypeWithParentheses() throws Exception {
+        assertProducedTokens("declare variable $item as (item()) external;", new String[]{
+                "WHITE_SPACE", "",
+                "declare", "declare",
+                "WHITE_SPACE", " ",
+                "variable", "variable",
+                "WHITE_SPACE", " ",
+                "$", "$",
+                "NCName", "item",
+                "WHITE_SPACE", " ",
+                "as", "as",
+                "WHITE_SPACE", " ",
+                "(", "(",
+                "item", "item",
+                "(", "(",
+                ")", ")",
+                ")", ")",
+                "WHITE_SPACE", " ",
+                "external", "external",
+                ";", ";"
+        });
+    }
+
+    public void testItemTypeWithParenthesesAndNoSpaceBefore() throws Exception {
+        assertProducedTokens("declare variable $item as(item()) external;", new String[]{
+                "WHITE_SPACE", "",
+                "declare", "declare",
+                "WHITE_SPACE", " ",
+                "variable", "variable",
+                "WHITE_SPACE", " ",
+                "$", "$",
+                "NCName", "item",
+                "WHITE_SPACE", " ",
+                "as", "as",
+                "(", "(",
+                "item", "item",
+                "(", "(",
+                ")", ")",
+                ")", ")",
+                "WHITE_SPACE", " ",
+                "external", "external",
+                ";", ";"
+        });
+    }
+
+    public void testItemTypeWithParenthesesAndSpaces() throws Exception {
+        assertProducedTokens("declare variable $item as ( item ( ) ) external;", new String[]{
+                "WHITE_SPACE", "",
+                "declare", "declare",
+                "WHITE_SPACE", " ",
+                "variable", "variable",
+                "WHITE_SPACE", " ",
+                "$", "$",
+                "NCName", "item",
+                "WHITE_SPACE", " ",
+                "as", "as",
+                "WHITE_SPACE", " ",
+                "(", "(",
+                "WHITE_SPACE", " ",
+                "item", "item",
+                "WHITE_SPACE", " ",
+                "(", "(",
+                "WHITE_SPACE", " ",
+                ")", ")",
+                "WHITE_SPACE", " ",
+                ")", ")",
+                "WHITE_SPACE", " ",
+                "external", "external",
+                ";", ";"
+        });
+    }
+
+    public void testKindTestInStepExpression() throws Exception {
+        assertProducedTokens("/xxx/text()", new String[]{
+                "/", "/",
+                "NCName", "xxx",
+                "/", "/",
+                "text", "text",
+                "(", "(",
+                ")", ")"
+        });
+    }
+
+    public void testAttributeAxis() throws Exception {
+        assertProducedTokens("/attribute::foo", new String[]{
+                "/", "/",
+                "attribute", "attribute",
+                "::", "::",
+                "WHITE_SPACE", "",
+                "NCName", "foo"
         });
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Grzegorz Ligas <ligasgr@gmail.com>
+ * Copyright 2013 Grzegorz Ligas <ligasgr@gmail.com> and other contributors (see the CONTRIBUTORS file).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 apply plugin: 'java'
 apply plugin: 'idea'
 apply from: 'idea.gradle'
+
 sourceCompatibility = 1.6
 
 // Update this path to point to your IDEA installation
@@ -42,6 +43,8 @@ sourceSets {
             srcDirs 'gen'
         }
         compileClasspath += configurations.provided
+        test.compileClasspath += configurations.provided
+        test.runtimeClasspath += configurations.provided
     }
 }
 
@@ -53,12 +56,23 @@ processResources {
 
 repositories {
     mavenCentral()
+    mavenLocal()
+
+    maven {
+        url "http://xqj.net/maven/"
+    }
 }
 
 dependencies {
-    compile fileTree(dir: project.ext.ideaInstallationPath + '/lib', include: '*.jar')
+    compile project(':intellij-xquery-rt') {
+        transitive = false
+    }
+    provided fileTree(dir: project.ext.ideaInstallationPath + '/lib', include: '*.jar')
     provided files("${System.properties['java.home']}/../lib/tools.jar")
     testCompile 'org.mockito:mockito-all:1.9.5'
+    testCompile('org.hamcrest:hamcrest-library:1.1') {
+        exclude group: 'org.hamcrest', module: 'hamcrest-core'
+    }
 }
 
 test {
@@ -70,10 +84,8 @@ task performanceTest(type: Test) {
     include '**/*PerformanceTest.*'
 }
 
-metaInf << files('/META-INF/plugin.xml')
-
-tasks.withType(Compile) { 
-    options.compilerArgs << "-Xlint:unchecked" 
+tasks.withType(Compile) {
+    options.compilerArgs << "-Xlint:unchecked"
 }
 
 task downloadSdk(type: DownloadTask) {
@@ -99,4 +111,19 @@ class DownloadTask extends DefaultTask {
     void download() {
         ant.get(src: sourceUrl, dest: target)
     }
+}
+
+task dist(type: Zip) {
+    from jar.outputs.files
+    from configurations.runtime
+    into('intellij-xquery/lib')
+}
+
+task prepareForms(dependsOn: ':classes') << {
+    ant.taskdef(name: 'javac2', classname: 'com.intellij.ant.Javac2', classpath: configurations.provided.asPath)
+    ant.javac2(destdir: sourceSets.main.output.classesDir, srcdir: 'src/main/java;gen;src/main/resources', classpath: (configurations.provided + configurations.compile).asPath, debug: 'on', nowarn: 'on')
+}
+
+jar {
+    it.dependsOn prepareForms
 }
