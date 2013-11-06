@@ -16,6 +16,7 @@
 
 package org.intellij.xquery.runner.ui.datasources;
 
+import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.components.JBCheckBox;
 import org.intellij.xquery.runner.rt.XQueryDataSourceType;
@@ -38,7 +39,9 @@ public class ConfigurationFilePanel {
     private TextFieldWithBrowseButton configFile;
 
     public ConfigurationFilePanel() {
-        configFile.addBrowseFolderListener("Choose file", null, null, createSingleFileNoJarsDescriptor());
+        configFile.addBrowseFolderListener("Choose file", null, null, createSingleFileNoJarsDescriptor(),
+                TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT , false);
+        configFile.getTextField().setName("configFile");
         configurationEnabled.addActionListener(getConfigEnabledListener());
     }
 
@@ -67,5 +70,9 @@ public class ConfigurationFilePanel {
                 configurationEnabledChanged();
             }
         };
+    }
+
+    public JPanel getMainPanel() {
+        return mainPanel;
     }
 }

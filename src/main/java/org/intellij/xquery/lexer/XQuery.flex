@@ -121,6 +121,8 @@ SC=({S} | "(:" {Char}* ~":)")+
 "(:"                                       {pushState(EXPR_COMMENT);return XQueryBasicTypes.EXPR_COMMENT_START;}
 "<<"                                       {return XQueryTypes.NODECOMP_LT;}
 ">>"                                       {return XQueryTypes.NODECOMP_GT;}
+"<!--"                                     {pushState(DIR_COMMENT); return XQueryTypes.DIR_COMMENT_BEGIN;}
+"<![CDATA["                                {pushState(CDATA); return XQueryTypes.CDATA_BEGIN;}
 "<" / {SC}? "$"                            {return XQueryTypes.LT_CHAR;}
 "<" / {SC}? {IntegerLiteral}               {return XQueryTypes.LT_CHAR;}
 "<" / {SC}? {DecimalLiteral}               {return XQueryTypes.LT_CHAR;}
@@ -129,6 +131,7 @@ SC=({S} | "(:" {Char}* ~":)")+
 "<" / {SC}? {NCName} {SC}? ":" {SC}? {NCName} {SC}? "(" {return XQueryTypes.LT_CHAR;}
 "<="                                       {return XQueryTypes.LE_CHARS;}
 ">="                                       {return XQueryTypes.GE_CHARS;}
+"</"                                       {pushState(END_TAG); return XQueryTypes.END_TAG;}
 "<"                                        {pushState(START_TAG); return XQueryTypes.LT_CHAR;}
 ">"                                        {return XQueryTypes.GT_CHAR;}
 "@"                                        {pushState(QNAME);return XQueryTypes.AT_SIGN;}

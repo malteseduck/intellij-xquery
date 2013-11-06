@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+
+
 apply plugin: 'java'
 apply plugin: 'idea'
 
@@ -39,4 +41,8 @@ dependencies {
 
 tasks.withType(Compile) {
     options.compilerArgs << "-Xlint:unchecked"
+}
+
+test {
+    include '**/org/intellij/xquery/runner/rt/unit/**'
 }

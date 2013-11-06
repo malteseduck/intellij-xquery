@@ -32,6 +32,8 @@ import java.awt.event.ActionListener;
  */
 public class DataSourceMainConfigurationPanel {
 
+    public static final String NAME_FIELD = "nameField";
+    public static final String SET_AS_DEFAULT_BUTTON_NAME = "setAsDefaultButton";
     private JPanel mainPanel;
     private LabeledComponent<JTextField> name;
     private ConfigurationFilePanel configurationFilePanel;
@@ -45,6 +47,8 @@ public class DataSourceMainConfigurationPanel {
                                             DocumentListener nameChangedListener) {
         dataSourceType = dataSourceConfiguration.TYPE;
         name.getComponent().setText(dataSourceConfiguration.NAME);
+        name.getComponent().setName(NAME_FIELD);
+        setAsDefaultButton.setName(SET_AS_DEFAULT_BUTTON_NAME);
         isDefault = dataSourceConfiguration.DEFAULT;
         name.getComponent().getDocument().addDocumentListener(nameChangedListener);
         initConfigurationFilePanel(dataSourceConfiguration);
@@ -79,7 +83,7 @@ public class DataSourceMainConfigurationPanel {
         currentConfiguration.USERNAME = connectionParametersPanel.getUsername();
         currentConfiguration.PASSWORD = connectionParametersPanel.getPassword();
         currentConfiguration.USER_DEFINED_LIBRARY_ENABLED = userDefinedLibraryPanel.isUserDefinedLibraryEnabled();
-        currentConfiguration.USER_DEFINED_LIBRARY_PATH = userDefinedLibraryPanel.getUserDefinedLibraryPath();
+        currentConfiguration.USER_DEFINED_LIBRARY_PATHS = userDefinedLibraryPanel.getUserDefinedLibraryPaths();
         currentConfiguration.DATABASE_NAME = connectionParametersPanel.getDatabaseName();
         currentConfiguration.DEFAULT = isDefault;
         return currentConfiguration;
@@ -94,6 +98,6 @@ public class DataSourceMainConfigurationPanel {
     }
 
     private void initUserDefinedLibraryPanel(XQueryDataSourceConfiguration cfg) {
-        userDefinedLibraryPanel.init(cfg.USER_DEFINED_LIBRARY_ENABLED, cfg.USER_DEFINED_LIBRARY_PATH);
+        userDefinedLibraryPanel.init(cfg.USER_DEFINED_LIBRARY_ENABLED, cfg.USER_DEFINED_LIBRARY_PATHS);
     }
 }
