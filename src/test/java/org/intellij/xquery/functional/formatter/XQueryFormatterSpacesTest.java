@@ -118,16 +118,7 @@ public class XQueryFormatterSpacesTest extends XQueryFormattingModelBuilderTest 
         executeTest(withSpaces, withoutSpaces);
     }
 
-    public void testSpaceAroundKeyword() {
-        String withTabs = "\t\tdeclare\t\tfunction\texample() {()};\n" +
-                "example()";
-        String withSpaces = "declare function example() {()};\n" +
-                "example()";
-
-        executeTest(withTabs, withSpaces);
-    }
-
-    public void testSpaceAroundAssignmentInModuleDeclAndFirstDecl() {
+    public void testSpaceAroundAssignmentInProlog() {
         String withSpaces = "module namespace example = \"example\";\n" +
                 "declare default decimal-format decimal-separator = \"anything\" NaN = \"whatever\";\n" +
                 "import schema namespace ex = \"ex\";\n" +
@@ -269,5 +260,114 @@ public class XQueryFormatterSpacesTest extends XQueryFormattingModelBuilderTest 
         executeTest(withSpace, withoutSpace);
         getSettings().SPACE_AROUND_UNARY_OPERATOR = true;
         executeTest(withoutSpace, withSpace);
+    }
+
+    public void testNoSpaceBeforeSeparator() {
+        String withSpace = "xquery version \"1.0\" encoding 'utf'  ; module namespace a = 'a'  ; declare default " +
+                "function namespace 'a'  ; declare default element namespace 'a'  ; declare boundary-space preserve  " +
+                "; declare default collation 'a'  ; declare base-uri 'a'  ; declare construction strip  ; declare " +
+                "ordering ordered  ; declare default order empty greatest  ; declare copy-namespaces preserve, " +
+                "inherit  ; declare decimal-format a:a decimal-separator = 'a' grouping-separator = 'a' infinity = " +
+                "'a' minus-sign = 'a' NaN = 'a' percent = 'a' per-mille = 'a' zero-digit = 'a' digit = 'a' " +
+                "pattern-separator = 'a'  ; declare namespace a = 'a'  ; import schema 'a'  ; declare context item " +
+                "external  ; declare option a 'a'  ; declare variable $a := 'a'  ; declare function a() {'a'}  ;";
+        String withoutSpace = "xquery version \"1.0\" encoding 'utf'; module namespace a = 'a'; declare default " +
+                "function namespace 'a'; declare default element namespace 'a'; declare boundary-space preserve; " +
+                "declare default collation 'a'; declare base-uri 'a'; declare construction strip; declare ordering " +
+                "ordered; declare default order empty greatest; declare copy-namespaces preserve, " +
+                "inherit; declare decimal-format a:a decimal-separator = 'a' grouping-separator = 'a' infinity = 'a' " +
+                "minus-sign = 'a' NaN = 'a' percent = 'a' per-mille = 'a' zero-digit = 'a' digit = 'a' " +
+                "pattern-separator = 'a'; declare namespace a = 'a'; import schema 'a'; declare context item " +
+                "external; declare option a 'a'; declare variable $a := 'a'; declare function a() {'a'};";
+
+        executeTest(withSpace, withoutSpace);
+    }
+
+    public void testSpaceAroundKeyword() {
+        String withTabs = "\t\tdeclare\t\tfunction\texample() {()};\n" +
+                "example()";
+        String withSpaces = "declare function example() {()};\n" +
+                "example()";
+
+        executeTest(withTabs, withSpaces);
+    }
+
+    public void testSpaceAroundKeywordsInPrologOfLibraryModule() {
+        String withDuplicatedSpace = "  xquery  version  \"1.0\"  encoding  'utf';  module  namespace  a = 'a';  " +
+                "declare  default  function  namespace  'a';  declare  default  element  namespace  'a';  declare  " +
+                "boundary-space  preserve;  declare  default  collation  'a';  declare  base-uri  'a';  declare  " +
+                "construction  strip;  declare  ordering  ordered;  declare  default  order  empty  greatest;  " +
+                "declare  copy-namespaces  preserve,  inherit;  declare  decimal-format  a:a  decimal-separator  = " +
+                "'a'  grouping-separator  = 'a'  infinity  = 'a'  minus-sign  = 'a'  NaN  = 'a'  percent  = 'a'  " +
+                "per-mille  = 'a'  zero-digit  = 'a'  digit  = 'a'  pattern-separator  = 'a';  declare  namespace  a " +
+                "= 'a';  import  module  'a';    import  schema  'a';  declare  context  item  external;  declare  option  a 'a';  declare  " +
+                "variable  $a := 'a';  declare  function  a() {'a'};";
+        String withSpace = "xquery version \"1.0\" encoding 'utf'; module namespace a = 'a'; declare default function" +
+                " namespace 'a'; declare default element namespace 'a'; declare boundary-space preserve; declare " +
+                "default collation 'a'; declare base-uri 'a'; declare construction strip; declare ordering ordered; " +
+                "declare default order empty greatest; declare copy-namespaces preserve, " +
+                "inherit; declare decimal-format a:a decimal-separator = 'a' grouping-separator = 'a' infinity = 'a' " +
+                "minus-sign = 'a' NaN = 'a' percent = 'a' per-mille = 'a' zero-digit = 'a' digit = 'a' " +
+                "pattern-separator = 'a'; declare namespace a = 'a'; import module 'a'; import schema 'a'; declare context item " +
+                "external; declare option a 'a'; declare variable $a := 'a'; declare function a() {'a'};";
+
+        executeTest(withDuplicatedSpace, withSpace);
+    }
+
+    public void testSpaceAroundKeywordsInPrologOfMainModule() {
+        String withDuplicatedSpace = "  xquery  version  \"1.0\"  encoding  'utf';  " +
+                "declare  default  function  namespace  'a';  declare  default  element  namespace  'a';  declare  " +
+                "boundary-space  preserve;  declare  default  collation  'a';  declare  base-uri  'a';  declare  " +
+                "construction  strip;  declare  ordering  ordered;  declare  default  order  empty  greatest;  " +
+                "declare  copy-namespaces  preserve,  inherit;  declare  decimal-format  a:a  decimal-separator  = " +
+                "'a'  grouping-separator  = 'a'  infinity  = 'a'  minus-sign  = 'a'  NaN  = 'a'  percent  = 'a'  " +
+                "per-mille  = 'a'  zero-digit  = 'a'  digit  = 'a'  pattern-separator  = 'a';  declare  namespace  a " +
+                "= 'a';  import  module  'a';  import  schema  'a';  declare  context  item  external;  declare  option  a 'a';  declare  " +
+                "variable  $a := 'a';  declare  function  a() {'a'};";
+        String withSpace = "xquery version \"1.0\" encoding 'utf'; declare default function" +
+                " namespace 'a'; declare default element namespace 'a'; declare boundary-space preserve; declare " +
+                "default collation 'a'; declare base-uri 'a'; declare construction strip; declare ordering ordered; " +
+                "declare default order empty greatest; declare copy-namespaces preserve, " +
+                "inherit; declare decimal-format a:a decimal-separator = 'a' grouping-separator = 'a' infinity = 'a' " +
+                "minus-sign = 'a' NaN = 'a' percent = 'a' per-mille = 'a' zero-digit = 'a' digit = 'a' " +
+                "pattern-separator = 'a'; declare namespace a = 'a'; import module 'a'; import schema 'a'; declare context item " +
+                "external; declare option a 'a'; declare variable $a := 'a'; declare function a() {'a'};";
+
+        executeTest(withDuplicatedSpace, withSpace);
+    }
+
+    public void testSpaceAroundKeywordsInExpressions() {
+        String withDuplicatedSpace = "  for  $i  in  1  to  10  for  $i  in  1  to  10  for  tumbling  window  $w  in  1  to  10  start  at  $s  when  fn:true()  only  end  at  $e  when  $e  =  1  let  $b  :=  'b'  where  $s  >  1  group  by  $c  as  xs:string  :=  'c'  collation  'col'  stable  order  by  'x'  ascending  empty  greatest  collation  'x'  order  by  $x  count  $z  return  some  $d  in  1  to  10  satisfies  if  ($d  is  validate  lax  {validate  type  xs:string {'s'}})  then  switch  ($d)  case  5  return  '5'  case  6  return  try  {''}  catch  Error {'sd'}  default  return  typeswitch  ($p)  case  $x1  as  xs:int  return  'int'  default  $d1  return  'def'  else  true  or  false  and  1  *  2  div  3  idiv  4  mod  5  union  6  intersect  7  except  8  cast  as  xs:integer  castable  as  xs:integer  treat  as  xs:integer  instance  of  xs:integer  =  1";
+        String withSpace = "for $i in 1 to 10 for $i in 1 to 10 for tumbling window $w in 1 to 10 start at $s when fn:true() only end at $e when $e = 1 let $b := 'b' where $s > 1 group by $c as xs:string := 'c' collation 'col' stable order by 'x' ascending empty greatest collation 'x' order by $x count $z return some $d in 1 to 10 satisfies if ($d is validate lax {validate type xs:string {'s'}}) then switch ($d) case 5 return '5' case 6 return try {''} catch Error {'sd'} default return typeswitch ($p) case $x1 as xs:int return 'int' default $d1 return 'def' else true or false and 1 * 2 div 3 idiv 4 mod 5 union 6 intersect 7 except 8 cast as xs:integer castable as xs:integer treat as xs:integer instance of xs:integer = 1";
+
+        executeTest(withDuplicatedSpace, withSpace);
+    }
+
+    public void testSpaceAroundCurlyBracesInTryCatch() {
+        String withDuplicatedSpace = "try  {''}  catch Exception1 | Exception2  {''}  catch Exception3  {''}";
+        String withSpace = "try {''} catch Exception1 | Exception2 {''} catch Exception3 {''}";
+
+        executeTest(withDuplicatedSpace, withSpace);
+    }
+
+    public void testSpaceAroundCurlyBracesInValidate() {
+        String withDuplicatedSpace = "validate  {validate lax  {validate type xs:int  {'a'}  }  }";
+        String withSpace = "validate {validate lax {validate type xs:int {'a'}}}";
+
+        executeTest(withDuplicatedSpace, withSpace);
+    }
+
+    public void testSpaceAroundCurlyBracesInPragma() {
+        String withDuplicatedSpace = "(# my #)  {'a'}";
+        String withSpace = "(# my #) {'a'}";
+
+        executeTest(withDuplicatedSpace, withSpace);
+    }
+
+    public void testSpaceAroundCurlyBracesInOrderedExpression() {
+        String withDuplicatedSpace = "ordered  {'a'}";
+        String withSpace = "ordered {'a'}";
+
+        executeTest(withDuplicatedSpace, withSpace);
     }
 }

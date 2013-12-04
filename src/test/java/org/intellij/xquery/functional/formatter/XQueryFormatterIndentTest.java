@@ -79,4 +79,20 @@ public class XQueryFormatterIndentTest extends XQueryFormattingModelBuilderTest 
     public void testIndentContentExpression() {
         executeTest();
     }
+
+    public void testIndentTryCatch() {
+        executeTest();
+    }
+
+    public void testIndentStepExpr() {
+        executeTest();
+    }
+
+    public void testIndentInTheMiddleOfStepExpr() {
+        executeTest();
+    }
+
+    public void testIndentCommentInsideOfFunction() {
+        executeTest();
+    }
 }

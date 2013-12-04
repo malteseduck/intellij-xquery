@@ -65,7 +65,7 @@ DoubleLiteral=(("." {Digits}) | ({Digits} ("." [0-9]*)?)) [eE] [+-]? {Digits}   
 StringLiteral=("\"" ({PredefinedEntityRef} | {CharRef} | {EscapeQuot} | [^\"&])* "\"") | ("'" ({PredefinedEntityRef} | {CharRef} | {EscapeApos} | [^'&])* "'") 	/* ws: explicit */
 URIQualifiedName={BracedURILiteral} {NCName}                                                /* ws: explicit */
 BracedURILiteral="Q" "{" ({PredefinedEntityRef} | {CharRef} | [^&{}]    )* "}"                  /* ws: explicit */
-PredefinedEntityRef="&" | ("lt" | "gt" | "amp" | "quot" | "apos" | "bdquo" | "brvbar" | "bull" | "circ" | "copy" | "emsp" | "ensp" | "hellip" | "iexcl" | "iquest" | "laquo" | "ldquo" | "lsaquo" | "lsquo" | "mdash" | "nbsp" |  "dash" | "oline" | "prime" | "Prime" | "raquo" | "rdquo" | "rsaquo" | "rsquo" | "sbquo" | "thinsp" | "tilde" | "uml" | "acute" | "cedil" | "cent" | "curren" | "deg" | "divide" | "macr" | "micro" | "middot" | "not" | "ordf" | "ordm" | "para" | "plusmn" | "pound" | "sect" | "times" | "yen") ";"                         /* ws: explicit */
+PredefinedEntityRef="&" ("lt" | "gt" | "amp" | "quot" | "apos" | "bdquo" | "brvbar" | "bull" | "circ" | "copy" | "emsp" | "ensp" | "hellip" | "iexcl" | "iquest" | "laquo" | "ldquo" | "lsaquo" | "lsquo" | "mdash" | "nbsp" |  "dash" | "oline" | "prime" | "Prime" | "raquo" | "rdquo" | "rsaquo" | "rsquo" | "sbquo" | "thinsp" | "tilde" | "uml" | "acute" | "cedil" | "cent" | "curren" | "deg" | "divide" | "macr" | "micro" | "middot" | "not" | "ordf" | "ordm" | "para" | "plusmn" | "pound" | "sect" | "times" | "yen") ";"                         /* ws: explicit */
 EscapeQuot="\"\""
 EscapeApos="''"
 Digits=[0-9]+
@@ -102,6 +102,9 @@ SC=({S} | "(:" {Char}* ~":)")+
 %state PI_BEFORE_CONTENT
 %state PI_CONTENT
 %state CDATA
+%state TAG_QNAME
+%state ATTR_LIST
+%state ATTR_QNAME
 // helper states for better support of live syntax highlighting
 %state XQUERY_RECOGNITION
 %state DECLARATION_RECOGNITION
@@ -129,11 +132,17 @@ SC=({S} | "(:" {Char}* ~":)")+
 "<" / {SC}? {DoubleLiteral}                {return XQueryTypes.LT_CHAR;}
 "<" / {SC}? {NCName} {SC}? "("             {return XQueryTypes.LT_CHAR;}
 "<" / {SC}? {NCName} {SC}? ":" {SC}? {NCName} {SC}? "(" {return XQueryTypes.LT_CHAR;}
+"<"                                        {pushState(START_TAG); return XQueryTypes.XMLSTARTTAGSTART;}
 "<="                                       {return XQueryTypes.LE_CHARS;}
 ">="                                       {return XQueryTypes.GE_CHARS;}
-"</"                                       {pushState(END_TAG); return XQueryTypes.END_TAG;}
-"<"                                        {pushState(START_TAG); return XQueryTypes.LT_CHAR;}
-">"                                        {return XQueryTypes.GT_CHAR;}
+"</"                                       {pushState(END_TAG); return XQueryTypes.XMLENDTAGSTART;}
+">" / {SC}? "$"                            {return XQueryTypes.GT_CHAR;}
+">" / {SC}? {IntegerLiteral}               {return XQueryTypes.GT_CHAR;}
+">" / {SC}? {DecimalLiteral}               {return XQueryTypes.GT_CHAR;}
+">" / {SC}? {DoubleLiteral}                {return XQueryTypes.GT_CHAR;}
+">" / {SC}? {NCName} {SC}? "("             {return XQueryTypes.GT_CHAR;}
+">" / {SC}? {NCName} {SC}? ":" {SC}? {NCName} {SC}? "(" {return XQueryTypes.GT_CHAR;}
+">"                                        {return XQueryTypes.XMLTAGEND;}
 "@"                                        {pushState(QNAME);return XQueryTypes.AT_SIGN;}
 "//" / {SC}? ("item"|"node"|"document-node"|"text"|"element"|"map"|"attribute"|"schema-element"|"schema-attribute"|"processing-instruction"|"comment"|"namespace-node"|"%"|"function") {SC}? "("  {return XQueryTypes.SLASH_SLASH;}
 "//" / {SC}? ("child"|"descendant"|"attribute"|"self"|"descendant-or-self"|"following-sibling"|"following"|"parent"|"ancestor"|"preceding-sibling"|"preceding"|"ancestor-or-self") {SC}? "::" {return XQueryTypes.SLASH_SLASH;}
@@ -177,18 +186,17 @@ SC=({S} | "(:" {Char}* ~":)")+
 "ge"                                       {return XQueryTypes.GE;}
 "declare"                                  {yypushback(yylength()); pushState(DECLARATION_RECOGNITION); return TokenType.WHITE_SPACE;}
 "namespace" / {SC} ({NCName}|"\""|"'"|"{") {return XQueryTypes.K_NAMESPACE;}
-"empty" / {SC} ("greates"|"least"|"at"|"in") {return XQueryTypes.K_EMPTY;}
+"empty" / {SC} ("greatest"|"least"|"at"|"in") {return XQueryTypes.K_EMPTY;}
 "allowing" / {SC} "empty"                  {return XQueryTypes.K_ALLOWING;}
 "greatest" / {SC}? (";"|",")               {return XQueryTypes.K_GREATEST;}
-"greatest" / {SC} ("for"|"let"|"order"|"stable"|"group"|"count"|"return") {return XQueryTypes.K_GREATEST;}
+"greatest" / {SC} ("for"|"let"|"order"|"stable"|"group"|"count"|"return"|"collation") {return XQueryTypes.K_GREATEST;}
 "least" / {SC}? (";"|",")                  {return XQueryTypes.K_LEAST;}
-"least" / {SC} ("for"|"let"|"order"|"stable"|"group"|"count"|"return") {return XQueryTypes.K_LEAST;}
+"least" / {SC} ("for"|"let"|"order"|"stable"|"group"|"count"|"return"|"collation") {return XQueryTypes.K_LEAST;}
 "ascending" / {SC}? ","                    {return XQueryTypes.K_ASCENDING;}
 "ascending" / {SC} ("empty"|"collation"|"for"|"let"|"order"|"stable"|"group"|"count"|"return"|",")   {return XQueryTypes.K_ASCENDING;}
 "descending" / {SC}? ","                   {return XQueryTypes.K_DESCENDING;}
 "descending" / {SC} ("empty"|"collation"|"for"|"let"|"order"|"stable"|"group"|"count"|"return"|",")  {return XQueryTypes.K_DESCENDING;}
-"inherit" / {SC}? ";"                      {return XQueryTypes.K_INHERIT;}
-"no-inherit" / {SC}? ";"                   {return XQueryTypes.K_NO_INHERIT;}
+"collation" / {SC} ("\""|"'")              {return XQueryTypes.K_COLLATION;}
 "import"                                   {yypushback(yylength()); pushState(IMPORT_RECOGNITION); return TokenType.WHITE_SPACE;}
 "module"                                   {yypushback(yylength()); pushState(MODULE_RECOGNITION); return TokenType.WHITE_SPACE;}
 "xquery"                                   {yypushback(yylength()); pushState(XQUERY_RECOGNITION); return TokenType.WHITE_SPACE;}
@@ -274,6 +282,8 @@ SC=({S} | "(:" {Char}* ~":)")+
 "default" / {SC} ("$"|"return")            {return XQueryTypes.K_DEFAULT;}
 "document" / {SC}? ("{")                   {return XQueryTypes.K_DOCUMENT;}
 "stable" / {SC} "order"                    {return XQueryTypes.K_STABLE;}
+"ordered" / {SC}? "{"                      {return XQueryTypes.K_ORDERED;}
+"unordered" / {SC}? "{"                    {return XQueryTypes.K_UNORDERED;}
 {NCName}                                   {pushState(QNAME);yypushback(yylength());return TokenType.WHITE_SPACE;}
 }
 
@@ -285,23 +295,47 @@ SC=({S} | "(:" {Char}* ~":)")+
 
 <START_TAG> {
 {S}                                        {return TokenType.WHITE_SPACE;}
-{NCName}                                   {return XQueryTypes.NCNAME;}
-":"                                        {return XQueryTypes.COLON;}
-"="                                        {return XQueryTypes.EQUAL;}
+{NCName}                                   {pushState(TAG_QNAME);yypushback(yylength());return TokenType.WHITE_SPACE;}
+">"                                        {popState();pushState(ELEMENT_CONTENT); return XQueryTypes.XMLTAGEND;}
+"/>"                                       {popState(); return XQueryTypes.XMLEMPTYELEMENTEND;}
+.                                          {yypushback(yylength()); popState(); return TokenType.WHITE_SPACE;}
+}
+
+<TAG_QNAME> {
+{NCName} ":" {NameStartCharWithoutFirst}   {yypushback(2); return XQueryTypes.XMLTAGNCNAME;}
+{NCName}                                   {pushState(ATTR_LIST); return XQueryTypes.XMLTAGNCNAME;}
+":"                                        {return XQueryTypes.XMLCOLON;}
+{S}                                        {yypushback(yylength()); popState(); return TokenType.WHITE_SPACE;}
+.                                          {yypushback(yylength()); popState(); return TokenType.WHITE_SPACE;}
+}
+
+<ATTR_LIST> {
+{S}                                        {return TokenType.WHITE_SPACE;}
+{NCName}                                   {pushState(ATTR_QNAME);yypushback(yylength());return TokenType.WHITE_SPACE;}
+"="                                        {return XQueryTypes.ATTREQUAL;}
 "\""                                       {pushState(QUOT_STRING); return XQueryTypes.QUOT;}
 "'"                                        {pushState(APOS_STRING); return XQueryTypes.APOSTROPHE;}
-">"                                        {popState();pushState(ELEMENT_CONTENT); return XQueryTypes.GT_CHAR;}
-"/>"                                       {popState(); return XQueryTypes.CLOSE_TAG;}
+.                                          {yypushback(yylength()); popState(); return TokenType.WHITE_SPACE;}
+}
+
+<ATTR_QNAME> {
+{NCName} ":" {NameStartCharWithoutFirst}   {yypushback(2); return XQueryTypes.ATTRNCNAME;}
+{NCName}                                   {popState(); return XQueryTypes.ATTRNCNAME;}
+":"                                        {return XQueryTypes.ATTRCOLON;}
+{S}                                        {yypushback(yylength()); popState(); return TokenType.WHITE_SPACE;}
+.                                          {yypushback(yylength()); popState(); return TokenType.WHITE_SPACE;}
 }
 
 <ELEMENT_CONTENT> {
 {S}                                        {return TokenType.WHITE_SPACE;}
 "<!--"                                     {pushState(DIR_COMMENT); return XQueryTypes.DIR_COMMENT_BEGIN;}
 "<![CDATA["                                {pushState(CDATA); return XQueryTypes.CDATA_BEGIN;}
+{PredefinedEntityRef}                      {return XQueryTypes.PREDEFINEDENTITYREF;}
+{CharRef}                                  {return XQueryTypes.CHARREF;}
 "{{" | "}}" | [^{}<]                       {return XQueryTypes.ELEMENTCONTENTCHAR;}
 "{"                                        {pushState(YYINITIAL); return XQueryTypes.L_C_BRACE; }
-"</"                                       {popState(); pushState(END_TAG); return XQueryTypes.END_TAG;}
-"<"                                        {pushState(START_TAG); return XQueryTypes.LT_CHAR; }
+"</"                                       {popState(); pushState(END_TAG); return XQueryTypes.XMLENDTAGSTART;}
+"<"                                        {pushState(START_TAG); return XQueryTypes.XMLSTARTTAGSTART; }
 }
 
 <DIR_COMMENT> {
@@ -312,9 +346,9 @@ SC=({S} | "(:" {Char}* ~":)")+
 
 <END_TAG> {
 {S}                                        {return TokenType.WHITE_SPACE;}
-{NCName}                                   {return XQueryTypes.NCNAME;}
-":"                                        {return XQueryTypes.COLON;}
-">"                                        {popState(); return XQueryTypes.GT_CHAR;}
+{NCName}                                   {return XQueryTypes.XMLTAGNCNAME;}
+":"                                        {return XQueryTypes.XMLCOLON;}
+">"                                        {popState(); return XQueryTypes.XMLTAGEND;}
 }
 
 <QUOT_STRING> {
@@ -382,7 +416,7 @@ SC=({S} | "(:" {Char}* ~":)")+
 "copy-namespaces" / {SC} ("preserve"|"no-preserve") {return XQueryTypes.K_COPY_NAMESPACES;}
 "preserve" / {SC}? (";"|",")               {return XQueryTypes.K_PRESERVE;}
 "no-preserve" / {SC}? ","                  {return XQueryTypes.K_NO_PRESERVE;}
-"decimal-format" / {SC} ({NCName} | "decimal-separator" | "grouping-separator" | "infinity" | "minus-sign" | "NaN" | "percent" | "per-mille" | "zero-digit" | "digit" | "pattern-separator")                          {return XQueryTypes.K_DECIMAL_FORMAT;}
+"decimal-format" / ({SC} ({NCName} | "decimal-separator" | "grouping-separator" | "infinity" | "minus-sign" | "NaN" | "percent" | "per-mille" | "zero-digit" | "digit" | "pattern-separator") | {SC}? ";")                          {return XQueryTypes.K_DECIMAL_FORMAT;}
 "decimal-separator" / {SC}? "="            {return XQueryTypes.K_DECIMAL_SEPARATOR;}
 "grouping-separator" / {SC}? "="           {return XQueryTypes.K_GROUPING_SEPARATOR;}
 "infinity" / {SC}? "="                     {return XQueryTypes.K_INFINITY;}
@@ -417,12 +451,22 @@ SC=({S} | "(:" {Char}* ~":)")+
 "collation" / {SC} ("\""|"'")              {return XQueryTypes.K_COLLATION;}
 "%"                                        {return XQueryTypes.PERCENT;}
 "element" / ({SC}?"("|{SC}?"{"| {SC}{NCName})       {return XQueryTypes.K_ELEMENT;}
+"("                                        {return XQueryTypes.L_PAR;}
+")"                                        {return XQueryTypes.R_PAR;}
+","                                        {return XQueryTypes.COMMA;}
+"order" / {SC} "empty"                     {return XQueryTypes.K_ORDER;}
+"greatest" / {SC}? (";"|",")               {return XQueryTypes.K_GREATEST;}
+"least" / {SC}? (";"|",")                  {return XQueryTypes.K_LEAST;}
+"inherit" / {SC}? ";"                      {return XQueryTypes.K_INHERIT;}
+"no-inherit" / {SC}? ";"                   {return XQueryTypes.K_NO_INHERIT;}
 {NCName}                                   {pushState(QNAME);yypushback(yylength());return TokenType.WHITE_SPACE;}
 .                                          {yypushback(yylength()); popState(); return TokenType.WHITE_SPACE;}
 }
 
 <IMPORT_RECOGNITION> {
 {S}                                        {return TokenType.WHITE_SPACE;}
+"\""                                       {pushState(QUOT_STRING_SIMPLE);yypushback(yylength());return TokenType.WHITE_SPACE;}
+"'"                                        {pushState(APOS_STRING_SIMPLE);yypushback(yylength());return TokenType.WHITE_SPACE;}
 "(:"                                       {pushState(EXPR_COMMENT);return XQueryBasicTypes.EXPR_COMMENT_START;}
 "import" / {SC} ("schema"|"module")        {return XQueryTypes.K_IMPORT;}
 "schema" / {SC} ("namespace"|"default"|"\""|"'") {return XQueryTypes.K_SCHEMA;}
@@ -430,6 +474,9 @@ SC=({S} | "(:" {Char}* ~":)")+
 "module" / {SC} ("namespace"|"\""|"'")     {return XQueryTypes.K_MODULE;}
 "element" / {SC} "namespace"               {return XQueryTypes.K_ELEMENT;}
 "namespace" / {SC} ({NCName}|"\""|"'"|"{") {return XQueryTypes.K_NAMESPACE;}
+"at" / {SC} ("\""|"'")                     {return XQueryTypes.K_AT;}
+","                                        {return XQueryTypes.COMMA;}
+"="                                        {return XQueryTypes.EQUAL;}
 {NCName}                                   {pushState(QNAME);yypushback(yylength());return TokenType.WHITE_SPACE;}
 .                                          {yypushback(yylength()); popState(); return TokenType.WHITE_SPACE;}
 }

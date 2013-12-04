@@ -34,14 +34,14 @@ public class XQueryDirAttributeNameImpl extends XQueryElementImpl implements XQu
 
   @Override
   @NotNull
-  public XQueryLocalPart getLocalPart() {
-    return findNotNullChildByClass(XQueryLocalPart.class);
+  public XQueryAttrLocalName getAttrLocalName() {
+    return findNotNullChildByClass(XQueryAttrLocalName.class);
   }
 
   @Override
   @Nullable
-  public XQueryPrefix getPrefix() {
-    return findChildByClass(XQueryPrefix.class);
+  public XQueryAttrNamespace getAttrNamespace() {
+    return findChildByClass(XQueryAttrNamespace.class);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {

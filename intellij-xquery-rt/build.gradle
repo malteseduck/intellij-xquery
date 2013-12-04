@@ -16,6 +16,8 @@
 
 
 
+
+
 apply plugin: 'java'
 apply plugin: 'idea'
 
@@ -44,5 +46,7 @@ tasks.withType(Compile) {
 }
 
 test {
-    include '**/org/intellij/xquery/runner/rt/unit/**'
+    include '**/org/intellij/xquery/unit/**'
+    include '**/org/intellij/xquery/functional/**'
+    include '**/org/intellij/xquery/integration/**'
 }

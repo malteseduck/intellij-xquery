@@ -19,10 +19,14 @@ package org.intellij.xquery.performance;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ThrowableRunnable;
-import org.intellij.xquery.functional.BaseFunctionalTestCase;
 import org.intellij.xquery.psi.XQueryFunctionCall;
 
+import java.util.Collection;
+import java.util.List;
+
+import static com.intellij.testFramework.PlatformTestUtil.startPerformanceTest;
 import static org.intellij.xquery.functional.reference.ReferenceUtil.getTargetOfReferenceAtCaret;
 
 /**
@@ -30,87 +34,54 @@ import static org.intellij.xquery.functional.reference.ReferenceUtil.getTargetOf
  * Date: 19/08/13
  * Time: 19:28
  */
-public class FunctionReferencesPerformanceTest extends BaseFunctionalTestCase {
+public class FunctionReferencesPerformanceTest extends BasePerformanceTestCase {
 
-    private static final String MODULE_DECLARATION = "module namespace prefix_%s_%s='module_%s_%s';\n";
-    private static final String IMPORT_DECLARATION = "import module namespace module_%s_%s = 'module_%s_%s.xq';\n";
-    private static final String VARIABLE_DECLARATION = "declare variable $prefix_%s_%s:var_%s:= ();\n";
-    private static final String FUNCTION_DECLARATION = "declare function prefix_%s_%s:function_%s(){()};\n";
-    private static final String MODULE_FILENAME = "module_%s_%s.xq";
-    private static final String MAIN_FILE = "target";
+    public void testFunctionCompletion() throws Exception {
+        String template = "declare function prefix_%s_target:example() {<caret>};";
+        String testSpecificContent = String.format(template, testName);
+        setupTestFiles(1000, 100, 10, 10, testSpecificContent, testName);
 
-    public void testCompletion() throws Exception {
-        setupTestFiles(1000, 100, 10, "declare function prefix_target:example() {<caret>};", getTestName(false));
-
-        PlatformTestUtil.startPerformanceTest(getTestName(false), 40000, new ThrowableRunnable() {
+        startPerformanceTest(testName, 40000, new ThrowableRunnable() {
             @Override
             public void run() throws Exception {
                 for (int i = 0; i < 100; i++) {
                     myFixture.complete(CompletionType.BASIC, 1);
-                    myFixture.getLookupElementStrings();
+                    List<String> lookupElementStrings = myFixture.getLookupElementStrings();
+                    assertTrue(lookupElementStrings != null && lookupElementStrings.size() > 0);
                 }
             }
         }).cpuBound().attempts(1).assertTiming();
     }
 
-    public void testReferenceResolution() throws Exception {
-        setupTestFiles(1000, 100, 10, "declare function prefix_target:example() {module_0:fun<caret>ction_9()};",
-                getTestName(false));
-        PlatformTestUtil.startPerformanceTest(getTestName(false), 1000, new ThrowableRunnable() {
+    public void testFunctionReferenceResolution() throws Exception {
+        String template = "declare function prefix_%s_target:example() {module_%s_0:fun<caret>ction_9()};";
+        String testSpecificContent = String.format(template, testName, testName);
+        setupTestFiles(1000, 100, 10, 10, testSpecificContent, testName);
+
+        startPerformanceTest(testName, 1000, new ThrowableRunnable() {
             @Override
             public void run() throws Exception {
                 for (int i = 0; i < 100; i++) {
-                    getTargetOfReferenceAtCaret(myFixture, XQueryFunctionCall.class);
+                    assertTrue(getTargetOfReferenceAtCaret(myFixture, XQueryFunctionCall.class) != null);
                 }
             }
         }).cpuBound().attempts(1).assertTiming();
     }
 
-    public void testFindUsage() throws Exception {
-        setupTestFiles(1000, 100, 10, "declare function prefix_target:example() {module_0:fun<caret>ction_9()};",
-                getTestName(false));
+    public void testFunctionFindUsage() throws Exception {
+        String template = "declare function prefix_%s_target:example() {module_%s_0:fun<caret>ction_9()};";
+        String testSpecificContent = String.format(template, testName, testName);
+        setupTestFiles(1000, 100, 10, 10, testSpecificContent, testName);
         final PsiElement source = myFixture.getElementAtCaret();
-        PlatformTestUtil.startPerformanceTest(getTestName(false), 300000, new ThrowableRunnable() {
+
+        startPerformanceTest(testName, 300000, new ThrowableRunnable() {
             @Override
             public void run() throws Exception {
                 for (int i = 0; i < 100; i++) {
-                    myFixture.findUsages(source);
+                    Collection<UsageInfo> usages = myFixture.findUsages(source);
+                    assertTrue(usages != null && usages.size() > 0);
                 }
             }
         }).cpuBound().attempts(1).assertTiming();
-    }
-
-    private void setupTestFiles(int numberOfProjectFiles, int numberOfImports, int numberOfFunctionsPerModule, String
-            testSpecificContent, String testName) {
-        String mainFileName = String.format(MODULE_FILENAME, testName, MAIN_FILE);
-        myFixture.addFileToProject(mainFileName,
-                getMainFileContent(numberOfImports,
-                testSpecificContent, testName));
-        myFixture.configureFromTempProjectFile(mainFileName);
-
-        for (int i = 0; i < numberOfProjectFiles; i++) {
-            StringBuilder projectFileContent = new StringBuilder(String.format(MODULE_DECLARATION, testName, i,
-                    testName, i));
-            for (int j = 0; j < 20; j++) {
-                projectFileContent.append(String.format(VARIABLE_DECLARATION, testName, i, j));
-            }
-            for (int j = 0; j < numberOfFunctionsPerModule; j++) {
-                projectFileContent.append(String.format(FUNCTION_DECLARATION, testName, i, j));
-            }
-            String importedFileName = String.format(MODULE_FILENAME, testName, i);
-            myFixture.addFileToProject(importedFileName, projectFileContent.toString());
-        }
-    }
-
-    private String getMainFileContent(int numberOfImports, String testSpecificContent, String testName) {
-        StringBuilder mainFileContent = new StringBuilder(String.format(MODULE_DECLARATION, testName, MAIN_FILE,
-                testName, MAIN_FILE));
-
-        for (int i = 0; i < numberOfImports; i++) {
-            mainFileContent.append(String.format(IMPORT_DECLARATION, testName, i, testName, i));
-        }
-
-        mainFileContent.append(testSpecificContent);
-        return mainFileContent.toString();
     }
 }

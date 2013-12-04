@@ -32,12 +32,15 @@ import static org.intellij.xquery.runner.state.datasources.XQueryDataSourcesSett
  * Time: 14:47
  */
 public class XQueryDataSourcesConfigurable implements Configurable {
+    public static final String CONFIGURABLE_NAME = "XQuery Data Sources";
+    private final DataSourcesSettingsFormFactory dataSourcesSettingsFormFactory = getDataSourcesSettingsFormFactory();
+
     private DataSourcesSettingsForm settingsForm;
 
     @Nls
     @Override
     public String getDisplayName() {
-        return "XQuery Data Sources";
+        return CONFIGURABLE_NAME;
     }
 
     @Nullable
@@ -50,7 +53,7 @@ public class XQueryDataSourcesConfigurable implements Configurable {
     @Override
     public JComponent createComponent() {
         if (settingsForm == null) {
-            settingsForm = new DataSourcesSettingsForm(getInstance().getDataSourceConfigurations());
+            settingsForm = dataSourcesSettingsFormFactory.getSettingsForm();
         }
         return settingsForm.getFormComponent();
     }
@@ -58,7 +61,7 @@ public class XQueryDataSourcesConfigurable implements Configurable {
     @Override
     public boolean isModified() {
         if (settingsForm != null) {
-            return settingsForm.isModified(getInstance().getDataSourceConfigurations());
+            return settingsForm.isModified(getDataSourceSettings().getDataSourceConfigurations());
         }
         return false;
     }
@@ -66,19 +69,27 @@ public class XQueryDataSourcesConfigurable implements Configurable {
     @Override
     public void apply() throws ConfigurationException {
         if (settingsForm != null) {
-            getInstance().setDataSourceConfigurations(settingsForm.getCurrentConfigurations());
+            getDataSourceSettings().setDataSourceConfigurations(settingsForm.getCurrentConfigurations());
         }
     }
 
     @Override
     public void reset() {
         if (settingsForm != null) {
-            settingsForm.populateWithConfigurations(getInstance().getDataSourceConfigurations());
+            settingsForm.populateWithConfigurations(getDataSourceSettings().getDataSourceConfigurations());
         }
     }
 
     @Override
     public void disposeUIResources() {
         settingsForm = null;
+    }
+
+    protected XQueryDataSourcesSettings getDataSourceSettings() {
+        return getInstance();
+    }
+
+    protected DataSourcesSettingsFormFactory getDataSourcesSettingsFormFactory() {
+        return new DataSourcesSettingsFormFactory();
     }
 }

@@ -30,6 +30,6 @@ public interface XQueryDirElemConstructor extends XQueryElement {
   List<XQueryDirElemContent> getDirElemContentList();
 
   @NotNull
-  List<XQueryTagName> getTagNameList();
+  List<XQueryXmlTagName> getXmlTagNameList();
 
 }

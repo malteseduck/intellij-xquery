@@ -16,9 +16,12 @@
 
 package org.intellij.xquery.unit.runner.state.run;
 
+import org.intellij.xquery.runner.state.run.DataSourceAccessor;
 import org.intellij.xquery.runner.state.run.ElementWriter;
+import org.intellij.xquery.runner.state.run.VariablesAccessor;
 import org.intellij.xquery.runner.state.run.XQueryRunConfiguration;
 import org.intellij.xquery.runner.state.run.XQueryRunConfigurationSerializer;
+import org.intellij.xquery.runner.state.run.XmlConfigurationAccessor;
 import org.jdom.Element;
 import org.junit.Before;
 import org.junit.Test;
@@ -30,6 +33,8 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -44,13 +49,20 @@ public class XQueryRunConfigurationSerializerTest {
     private XQueryRunConfigurationSerializer serializer;
     private Writer writer;
     private ElementWriter elementWriter;
+    private XmlConfigurationAccessor xmlConfigurationAccessor;
+    private VariablesAccessor variablesAccessor;
+    private DataSourceAccessor dataSourceAccessor;
 
     @Before
     public void setUp() throws Exception {
         configuration = mock(XQueryRunConfiguration.class);
+        xmlConfigurationAccessor = mock(XmlConfigurationAccessor.class);
+        variablesAccessor = mock(VariablesAccessor.class);
+        dataSourceAccessor = mock(DataSourceAccessor.class);
         writer = mock(Writer.class);
         elementWriter = mock(ElementWriter.class);
-        serializer = new XQueryRunConfigurationSerializer(configuration) {
+        serializer = new XQueryRunConfigurationSerializer(configuration, xmlConfigurationAccessor, variablesAccessor,
+                dataSourceAccessor) {
             @Override
             protected ElementWriter getElementWriter() {
                 return elementWriter;
@@ -62,21 +74,21 @@ public class XQueryRunConfigurationSerializerTest {
     public void shouldWriteVariables() throws Exception {
         serializer.serialize(writer);
 
-        verify(configuration).writeVariables(any(Element.class));
+        verify(variablesAccessor).writeVariables(eq(configuration), isA(Element.class));
     }
 
     @Test
     public void shouldWriteConfiguration() throws Exception {
         serializer.serialize(writer);
 
-        verify(configuration).writeConfiguration(any(Element.class));
+        verify(xmlConfigurationAccessor).writeConfiguration(eq(configuration), isA(Element.class));
     }
 
     @Test
     public void shouldWriteDataSourceConfiguration() throws Exception {
         serializer.serialize(writer);
 
-        verify(configuration).writeDataSourceConfiguration(any(Element.class));
+        verify(dataSourceAccessor).writeDataSourceConfiguration(eq(configuration), isA(Element.class));
     }
 
     @Test
@@ -85,7 +97,7 @@ public class XQueryRunConfigurationSerializerTest {
 
         serializer.serialize(writer);
 
-        verify(elementWriter).writeElement(any(Element.class), writerArgumentCaptor.capture(), anyString());
+        verify(elementWriter).writeElement(isA(Element.class), writerArgumentCaptor.capture(), anyString());
         assertThat(writerArgumentCaptor.getValue(), is(writer));
     }
 }

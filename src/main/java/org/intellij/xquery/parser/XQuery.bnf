@@ -219,29 +219,29 @@
   ]
 
   extends(".+Expr")=ExprSingle
-  implements("NamespaceName|VarName|FunctionName")="org.intellij.xquery.psi.XQueryNamedElement"
+  implements("NamespacePrefix|VarName|FunctionName|Prefix")="org.intellij.xquery.psi.XQueryNamedElement"
   implements("NamedFunctionRef|FunctionCall")="org.intellij.xquery.psi.XQueryFunctionInvocation"
   implements("ModuleDecl|ModuleImport|NamespaceDecl")="org.intellij.xquery.psi.XQueryNamespaceSource"
-  extends("NamespaceName|VarName|FunctionName")="org.intellij.xquery.psi.impl.XQueryNamedElementImpl"
+  extends("NamespacePrefix|VarName|FunctionName|Prefix")="org.intellij.xquery.psi.impl.XQueryNamedElementImpl"
 }
 
 xqueryFile ::= Module {pin(".*")=1}
 
-Module	   ::=   	VersionDecl? (LibraryModule | MainModule)
+private Module	   ::=   	VersionDecl? (LibraryModule | MainModule)
 VersionDecl	   ::=   	"xquery" ((VersionDeclEncoding) | (VersionDeclVersion)) Separator {pin=1 recoverUntil=VersionDeclRecover}
 private VersionDeclRecover ::= !('$' | '%' | '(#' | '(' | '*' | '+' | '-' | '.' | '..' | '/' | '//' | '<!--' | '<' | '<?' | '@' | 'ancestor' | 'ancestor-or-self' | 'attribute' | 'child' | 'comment' | 'declare' | 'descendant' | 'descendant-or-self' | 'document' | 'document-node' | 'element' | 'every' | 'following' | 'following-sibling' | 'for' | 'function' | 'if' | 'import' | 'let' | 'module' | 'namespace' | 'namespace-node' | 'node' | 'ordered' | 'parent' | 'preceding' | 'preceding-sibling' | 'processing-instruction' | 'schema-attribute' | 'schema-element' | 'self' | 'some' | 'switch' | 'text' | 'try' | 'typeswitch' | 'unordered' | 'validate' | -eof- | BracedURILiteral | DecimalLiteral | DoubleLiteral | IntegerLiteral | NCName | QName | StringLiteral | URIQualifiedName)
-VersionDeclEncoding ::= "encoding" StringLiteral {pin=1}
-VersionDeclVersion ::= "version" StringLiteral ("encoding" StringLiteral)? {pin=1}
-MainModule	   ::=   	Prolog QueryBody {pin=1}
-LibraryModule	   ::=   	ModuleDecl Prolog {pin=1}
-ModuleDecl	   ::=   	"module" "namespace" NamespaceName "=" URILiteral Separator {pin=1 recoverUntil=ModuleDeclRecover methods=[getNamespace]}
-NamespaceName ::= NCName  {methods=[getName setName getNameIdentifier delete]}
+private VersionDeclEncoding ::= "encoding" StringLiteral {pin=1}
+private VersionDeclVersion ::= "version" StringLiteral ("encoding" StringLiteral)? {pin=1}
+private MainModule	   ::=   	Prolog QueryBody {pin=1}
+private LibraryModule	   ::=   	ModuleDecl Prolog {pin=1}
+ModuleDecl	   ::=   	"module" "namespace" NamespacePrefix "=" URILiteral Separator {pin=1 recoverUntil=ModuleDeclRecover methods=[getNamespace]}
+NamespacePrefix ::= NCName  {methods=[getName setName getNameIdentifier delete]}
 private ModuleDeclRecover ::= !('declare' | 'import')
-Prolog	   ::=   	FirstDecl* SecondDecl* {methods=[processDeclarations]} //{recoverUntil=PrologRecover}
+private Prolog	   ::=   	FirstDecl* SecondDecl*
 private FirstDecl ::= DefaultNamespaceDecl | Setter | NamespaceDecl | Import
 private SecondDecl ::= ContextItemDecl | OptionDecl | AnnotatedDecl
 Separator	   ::=   	";"
-Setter	   ::=   	BoundarySpaceDecl | DefaultCollationDecl | BaseURIDecl | ConstructionDecl | OrderingModeDecl | EmptyOrderDecl | CopyNamespacesDecl | DecimalFormatDecl
+private Setter	   ::=   	BoundarySpaceDecl | DefaultCollationDecl | BaseURIDecl | ConstructionDecl | OrderingModeDecl | EmptyOrderDecl | CopyNamespacesDecl | DecimalFormatDecl
 BoundarySpaceDecl	   ::=   	"declare" "boundary-space" ("preserve" | "strip") Separator {pin=2}
 DefaultCollationDecl	   ::=   	"declare" "default" "collation" URILiteral Separator    {pin=3}
 BaseURIDecl	   ::=   	"declare" "base-uri" URILiteral Separator                           {pin=2}
@@ -252,14 +252,14 @@ CopyNamespacesDecl	   ::=   	"declare" "copy-namespaces" PreserveMode "," Inheri
 PreserveMode	   ::=   	"preserve" | "no-preserve"
 InheritMode	   ::=   	"inherit" | "no-inherit"
 DecimalFormatDecl	   ::=   	"declare" (("decimal-format" EQName) | ("default" "decimal-format")) (DFPropertyName "=" StringLiteral)* Separator {pin=2}
-DFPropertyName	   ::=   	"decimal-separator" | "grouping-separator" | "infinity" | "minus-sign" | "NaN" | "percent" | "per-mille" | "zero-digit" | "digit" | "pattern-separator"
-Import	   ::=   	SchemaImport | ModuleImport
-SchemaImport	   ::=   	"import" "schema" (("namespace" NamespaceName "=") | ("default" "element" "namespace"))? URILiteral ("at" URILiteral ("," URILiteral)*)? Separator {pin=2}
-ModuleImport	   ::=   	"import" "module" ("namespace" NamespaceName "=")? ModuleImportNamespace ("at" ModuleImportPath ("," ModuleImportPath)*)? Separator {pin=2 methods=[getNamespace]}
+private DFPropertyName	   ::=   	"decimal-separator" | "grouping-separator" | "infinity" | "minus-sign" | "NaN" | "percent" | "per-mille" | "zero-digit" | "digit" | "pattern-separator"
+private Import	   ::=   	SchemaImport | ModuleImport
+SchemaImport	   ::=   	"import" "schema" (("namespace" NamespacePrefix "=") | ("default" "element" "namespace"))? URILiteral ("at" URILiteral ("," URILiteral)*)? Separator {pin=2}
+ModuleImport	   ::=   	"import" "module" ("namespace" NamespacePrefix "=")? ModuleImportNamespace ("at" ModuleImportPath ("," ModuleImportPath)*)? Separator {pin=2 methods=[getNamespace]}
 ModuleImportNamespace ::= ModuleImportPath
 ModuleImportPath ::= URILiteral {methods=[getReference]}
-NamespaceDecl	   ::=   	"declare" "namespace" NamespaceName "=" URILiteral Separator {pin=2 methods=[getNamespace]}
-DefaultNamespaceDecl	   ::=   	(DefaultFunctionNamespaceDecl | DefaultElementNamespaceDecl) Separator
+NamespaceDecl	   ::=   	"declare" "namespace" NamespacePrefix "=" URILiteral Separator {pin=2 methods=[getNamespace]}
+private DefaultNamespaceDecl	   ::=   	(DefaultFunctionNamespaceDecl | DefaultElementNamespaceDecl) Separator
 DefaultFunctionNamespaceDecl	   ::=   	"declare" "default" "function" "namespace" URILiteral {pin=3}
 DefaultElementNamespaceDecl	   ::=   	"declare" "default" "element" "namespace" URILiteral {pin=3}
 private AnnotatedDecl	   ::=   (VarDecl | FunctionDecl) Separator {pin=1}
@@ -287,22 +287,25 @@ ExprSingle	   ::=   	FLWORExpr
  | IfExpr
  | TryCatchExpr
  | OrExpr
-FLWORExpr	   ::=   	InitialClause IntermediateClause* ReturnClause
-private FLWORExprRecover ::= !('count' | 'for' | 'group' | 'let' | 'order' | 'return' | 'stable' | 'where')
-InitialClause	   ::=   	ForClause | LetClause | WindowClause
-IntermediateClause	   ::=   	InitialClause | WhereClause | GroupByClause | OrderByClause | CountClause
-ForClause	   ::=   	"for" ForBinding ("," ForBinding)* {pin=1 recoverUntil=FLWORExprRecover}
-ForBinding	   ::=   	"$" VarName TypeDeclaration? AllowingEmpty? PositionalVar? "in" ExprSingle
+FLWORExpr	   ::=   	InitialClause IntermediateClause* ReturnClause {pin=1}
+private FLWORExprRecover ::= !('count' | 'for' | 'group' | 'let' | 'order' | 'return' | 'stable' | 'where' | '}' | '<' TagName | '</' TagName )
+private InitialClause	   ::=   	ForClause | WindowClause | LetClause {pin=1}
+private IntermediateClause	   ::=   	InitialClause | WhereClause | GroupByClause | OrderByClause | CountClause
+ForClause	   ::=   	"for" ForBinding ("," ForBinding)* {pin=2}
+ForBinding	   ::=   	"$" ForBindingDetails {pin=1}
+private ForBindingDetails ::= VarName TypeDeclaration? AllowingEmpty? PositionalVar? "in" ExprSingle {recoverUntil=FLWORExprRecover}
 AllowingEmpty	   ::=   	"allowing" "empty"
 PositionalVar	   ::=   	"at" "$" VarName
-LetClause	   ::=   	"let" LetBinding ("," LetBinding)* {pin=1 recoverUntil=FLWORExprRecover}
-LetBinding	   ::=   	"$" VarName TypeDeclaration? ":=" ExprSingle
-WindowClause	   ::=   	"for" (TumblingWindowClause | SlidingWindowClause)
-TumblingWindowClause	   ::=   	"tumbling" "window" "$" VarName TypeDeclaration? "in" ExprSingle WindowStartCondition WindowEndCondition? {pin=1 recoverUntil=FLWORExprRecover}
-SlidingWindowClause	   ::=   	"sliding" "window" "$" VarName TypeDeclaration? "in" ExprSingle WindowStartCondition WindowEndCondition {pin=1 recoverUntil=FLWORExprRecover}
-WindowStartCondition	   ::=   	"start" WindowVars "when" ExprSingle
-WindowEndCondition	   ::=   	"only"? "end" WindowVars "when" ExprSingle
-WindowVars	   ::=   	("$" CurrentItem)? PositionalVar? ("previous" "$" PreviousItem)? ("next" "$" NextItem)?
+LetClause	   ::=   	"let" LetBinding ("," LetBinding)* {pin=1}
+LetBinding	   ::=   	"$" VarName TypeDeclaration? ":=" ExprSingle {recoverUntil=FLWORExprRecover}
+WindowClause	   ::=   	"for" (TumblingWindowClause | SlidingWindowClause) {pin=2}
+private TumblingWindowClause	   ::=   	"tumbling" TumblingWindowDetails {pin=1}
+private TumblingWindowDetails ::= "window" "$" VarName TypeDeclaration? "in" ExprSingle WindowStartCondition WindowEndCondition? {recoverUntil=FLWORExprRecover}
+private SlidingWindowClause	   ::=   	"sliding" SlidingWindowDetails {pin=1}
+private SlidingWindowDetails ::= "window" "$" VarName TypeDeclaration? "in" ExprSingle WindowStartCondition WindowEndCondition {recoverUntil=FLWORExprRecover}
+private WindowStartCondition	   ::=   	"start" WindowVars "when" ExprSingle
+private WindowEndCondition	   ::=   	"only"? "end" WindowVars "when" ExprSingle
+private WindowVars	   ::=   	("$" CurrentItem)? PositionalVar? ("previous" "$" PreviousItem)? ("next" "$" NextItem)?
 CurrentItem	   ::=   	EQName
 PreviousItem	   ::=   	EQName
 NextItem	   ::=   	EQName
@@ -315,7 +318,7 @@ GroupingVariable	   ::=   	"$" VarName
 OrderByClause	   ::=   	(("order" "by") | ("stable" "order" "by")) OrderSpecList {pin=1 recoverUntil=FLWORExprRecover}
 OrderSpecList	   ::=   	OrderSpec ("," OrderSpec)*
 OrderSpec	   ::=   	ExprSingle OrderModifier
-OrderModifier	   ::=   	("ascending" | "descending")? ("empty" ("greatest" | "least"))? ("collation" URILiteral)?
+private OrderModifier	   ::=   	("ascending" | "descending")? ("empty" ("greatest" | "least"))? ("collation" URILiteral)?
 ReturnClause	   ::=   	"return" ExprSingle {pin=1}
 QuantifiedExpr	   ::=   	("some" | "every") "$" VarName TypeDeclaration? "in" ExprSingle ("," "$" VarName TypeDeclaration? "in" ExprSingle)* "satisfies" ExprSingle {pin=1}
 SwitchExpr	   ::=   	"switch" "(" Expr ")" SwitchCaseClause+ SwitchDefaultReturnClause {pin=1}
@@ -328,10 +331,10 @@ SwitchReturnClause ::= "return" ExprSingle
 CaseClause	   ::=   	"case" ("$" VarName "as")? SequenceTypeUnion SwitchReturnClause {pin=1}
 SequenceTypeUnion	   ::=   	SequenceType ("|" SequenceType)*
 IfExpr	   ::=   	"if" "(" Expr ")" "then" ExprSingle "else" ExprSingle {pin=1}
-TryCatchExpr	   ::=   	TryClause CatchClause+
+TryCatchExpr	   ::=   	TryClause CatchClause+ {pin=1}
 TryClause	   ::=   	"try" "{" TryTargetExpr "}" {pin=1}
-TryTargetExpr	   ::=   	Expr
-CatchClause	   ::=   	"catch" CatchErrorList "{" Expr "}"
+private TryTargetExpr	   ::=   	Expr
+CatchClause	   ::=   	"catch" CatchErrorList "{" Expr "}" {pin=1}
 CatchErrorList	   ::=   	NameTest ("|" NameTest)*
 OrExpr	   ::=   	AndExpr (OrMultipliedExpr)*
 private OrMultipliedExpr ::=  "or" AndExpr {pin=1}
@@ -358,7 +361,7 @@ private GeneralComp	   ::=   	"=" | "!=" | "<" | "<=" | ">" | ">="
 private ValueComp	   ::=   	"eq" | "ne" | "lt" | "le" | "gt" | "ge"
 private NodeComp	   ::=   	"is" | "<<" | ">>"
 ValidateExpr	   ::=   	"validate" (ValidationMode | ("type" TypeName))? "{" Expr "}"
-ValidationMode	   ::=   	"lax" | "strict"
+private ValidationMode	   ::=   	"lax" | "strict"
 ExtensionExpr	   ::=   	Pragma+ "{" Expr? "}"
 Pragma	   ::=   	"(#" S? EQName (S PragmaContents)? "#)"	/* ws: explicit */
 PragmaContents	   ::=   	PragmaContentChar*
@@ -366,7 +369,7 @@ SimpleMapExpr	   ::=   	PathExpr ("!" PathExpr)*
 PathExpr	   ::=   	("/" RelativePathExpr?)
  | ("//" RelativePathExpr)
  | RelativePathExpr	/* xgc: leading-lone-slash */
-RelativePathExpr	   ::=   	StepExpr (("/" | "//") StepExpr)*
+private RelativePathExpr	   ::=   	StepExpr (("/" | "//") StepExpr)*
 StepExpr	   ::=   	PostfixExpr | AxisStep
 AxisStep	   ::=   	(ReverseStep | ForwardStep) PredicateList
 ForwardStep	   ::=   	(ForwardAxis NodeTest) | AbbrevForwardStep
@@ -387,14 +390,15 @@ private ReverseAxis	   ::=   	("parent" "::")
 AbbrevReverseStep	   ::=   	".."
 NodeTest	   ::=   	KindTest | NameTest
 NameTest	   ::=   	Wildcard | EQName
-Wildcard	   ::=   	(NCName ":" "*")
+Wildcard	   ::=   	(Prefix ":" "*")
  | ("*" ":" NCName)
  | "*"
  | (BracedURILiteral "*")	/* ws: explicit */
 PostfixExpr	   ::=   	PrimaryExpr (Predicate | ArgumentList)*
-ArgumentList	   ::=   	"(" (Argument ("," Argument)*)? ")"
+ArgumentList	   ::=   	"(" (Argument OptionalArgumentAfterComma*)? ")" {pin=1}
+private OptionalArgumentAfterComma ::= "," Argument {pin=1}
 PredicateList	   ::=   	Predicate*
-Predicate	   ::=   	"[" Expr "]"
+Predicate	   ::=   	"[" Expr "]" {pin=1}
 PrimaryExpr	   ::=   	Literal
  | VarRef
  | ParenthesizedExpr
@@ -406,11 +410,11 @@ PrimaryExpr	   ::=   	Literal
  | FunctionItemExpr {pin=1}
 Literal	   ::=   	NumericLiteral | StringLiteral
 NumericLiteral	   ::=   	IntegerLiteral | DecimalLiteral | DoubleLiteral
-VarRef	   ::=   	"$" VarName {methods=[getReference]}
+VarRef	   ::=   	"$" VarName {pin=1 methods=[getReference]}
 ParenthesizedExpr	   ::=   	"(" Expr? ")" {pin=1}
 ContextItemExpr	   ::=   	"."
-OrderedExpr	   ::=   	"ordered" "{" Expr "}"
-UnorderedExpr	   ::=   	"unordered" "{" Expr "}"
+OrderedExpr	   ::=   	"ordered" "{" Expr "}" {pin=2}
+UnorderedExpr	   ::=   	"unordered" "{" Expr "}" {pin=2}
 FunctionCall	   ::=   	FunctionName ArgumentList {methods=[getReference getArity]}	/* xgc: reserved-function-names */
 				/* gn: parens */
 Argument	   ::=   	ExprSingle | ArgumentPlaceholder
@@ -420,10 +424,14 @@ Constructor	   ::=   	DirectConstructor
 DirectConstructor	   ::=   	DirElemConstructor
  | DirCommentConstructor
  | DirPIConstructor
-DirElemConstructor	   ::=   	"<" TagName DirAttributeList? ("/>" | (">" DirElemContent* "</" TagName ">"))	/* ws: explicit */ {pin=1}
-TagName                ::= QName
-DirAttributeList	   ::=   	(DirAttributeName "=" DirAttributeValue)*	/* ws: explicit */
-DirAttributeName       ::= QName
+DirElemConstructor	   ::=   	XmlStartTagStart XmlTagName DirAttributeList? (XmlEmptyElementEnd | (XmlTagEnd DirElemContent* XmlEndTagStart XmlTagName XmlTagEnd))	/* ws: explicit */ {pin=1}
+XmlTagName ::= XmlTagNamespace XmlColon XmlTagLocalName | XmlTagLocalName
+XmlTagNamespace ::= XmlTagNCName
+XmlTagLocalName ::= XmlTagNCName
+DirAttributeList	   ::=   	(DirAttributeName AttrEqual DirAttributeValue)*	/* ws: explicit */
+DirAttributeName ::= AttrNamespace AttrColon AttrLocalName | AttrLocalName
+AttrNamespace	   ::=   	AttrNCName
+AttrLocalName	   ::=   	AttrNCName
 DirAttributeValue	   ::=   	("\"" (EscapeQuot | QuotAttrValueContent)* "\"")
  | ("'" (EscapeApos | AposAttrValueContent)* "'")	/* ws: explicit */
 QuotAttrValueContent	   ::=   	QuotAttrContentChar
@@ -457,7 +465,6 @@ MapEntry               ::=  ExprSingle ":=" ExprSingle
 ContentExpr	   ::=   	Expr
 CompAttrConstructor	   ::=   	"attribute" (EQName | ("{" Expr "}")) "{" Expr? "}"
 CompNamespaceConstructor	   ::=   	"namespace" (Prefix | ("{" PrefixExpr "}")) "{" URIExpr "}"
-Prefix	   ::=   	NCName
 PrefixExpr	   ::=   	Expr
 URIExpr	   ::=   	Expr
 CompTextConstructor	   ::=   	"text" "{" Expr "}"
@@ -520,11 +527,9 @@ private QName	   ::=   	PrefixedName
 			| UnprefixedName
 private PrefixedName	   ::=   	Prefix ':' LocalPart
 private UnprefixedName	   ::=   	LocalPart
-Prefix	   ::=   	NCName
+Prefix ::= NCName                   {methods=[getName setName getNameIdentifier getReference isEquivalentTo]}
 LocalPart	   ::=   	NCName
-VarName ::= VarNamespace ':' VarLocalName | VarLocalName | URIQualifiedName {methods=[getName setName getNameIdentifier getTextOffset getUseScope getPresentation delete]}
-VarNamespace	   ::=   	NCName {methods=[getReference]}
+VarName ::= Prefix ':' VarLocalName | VarLocalName | URIQualifiedName {methods=[getName setName getNameIdentifier getTextOffset getUseScope getPresentation delete]}
 VarLocalName	   ::=   	NCName
-FunctionName ::= FunctionNamespace ':' FunctionLocalName | FunctionLocalName | URIQualifiedName {methods=[getName setName getNameIdentifier getTextOffset  getPresentation delete]}
-FunctionNamespace	   ::=   	NCName {methods=[getReference]}
+FunctionName ::= Prefix ':' FunctionLocalName | FunctionLocalName | URIQualifiedName {methods=[getName setName getNameIdentifier getTextOffset getPresentation delete]}
 FunctionLocalName	   ::=   	NCName

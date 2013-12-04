@@ -70,6 +70,7 @@ public class XQueryFormattingModelBuilder implements FormattingModelBuilder {
     private static SpacingBuilder createSpacingBuilder(CommonCodeStyleSettings settings,
                                                        XQueryCodeStyleSettings xQuerySettings) {
         return new SpacingBuilder(settings.getRootSettings())
+                .before(SEPARATOR).none()
                 .aroundInside(EQUAL, COMPARISON_EXPR).spaceIf(settings.SPACE_AROUND_EQUALITY_OPERATORS)
 
                 .aroundInside(EQUAL, MODULE_DECL).spaceIf(xQuerySettings.SPACE_AROUND_ASSIGNMENT_IN_PROLOG)
@@ -78,7 +79,7 @@ public class XQueryFormattingModelBuilder implements FormattingModelBuilder {
                 .aroundInside(EQUAL, DECIMAL_FORMAT_DECL).spaceIf(xQuerySettings.SPACE_AROUND_ASSIGNMENT_IN_PROLOG)
                 .aroundInside(EQUAL, NAMESPACE_DECL).spaceIf(xQuerySettings.SPACE_AROUND_ASSIGNMENT_IN_PROLOG)
 
-                .aroundInside(EQUAL, DIR_ATTRIBUTE_LIST).spaceIf(xQuerySettings
+                .aroundInside(ATTREQUAL, DIR_ATTRIBUTE_LIST).spaceIf(xQuerySettings
                         .SPACE_AROUND_ASSIGNMENT_IN_XML_ATTRIBUTE)
 
                 .aroundInside(NOT_EQUAL, COMPARISON_EXPR).spaceIf(settings.SPACE_AROUND_EQUALITY_OPERATORS)
@@ -126,16 +127,55 @@ public class XQueryFormattingModelBuilder implements FormattingModelBuilder {
 
                 .before(COMMA).spaceIf(settings.SPACE_BEFORE_COMMA)
                 .after(COMMA).spaceIf(settings.SPACE_AFTER_COMMA)
+
                 .around(KEYWORDS).spaces(1)
+                .around(VERSION_DECL).spaces(1)
+                .around(MODULE_DECL).spaces(1)
+                .around(DEFAULT_FUNCTION_NAMESPACE_DECL).spaces(1)
+                .around(DEFAULT_ELEMENT_NAMESPACE_DECL).spaces(1)
+                .around(BOUNDARY_SPACE_DECL).spaces(1)
+                .around(DEFAULT_COLLATION_DECL).spaces(1)
+                .around(BASE_URI_DECL).spaces(1)
+                .around(CONSTRUCTION_DECL).spaces(1)
+                .around(ORDERING_MODE_DECL).spaces(1)
+                .around(EMPTY_ORDER_DECL).spaces(1)
+                .around(COPY_NAMESPACES_DECL).spaces(1)
+                .around(DECIMAL_FORMAT_DECL).spaces(1)
+                .around(NAMESPACE_DECL).spaces(1)
+                .around(MODULE_IMPORT).spaces(1)
+                .around(SCHEMA_IMPORT).spaces(1)
+                .around(OPTION_DECL).spaces(1)
+                .around(VAR_DECL).spaces(1)
+                .around(FUNCTION_DECL).spaces(1)
+                .around(FOR_CLAUSE).spaces(1)
+                .around(WINDOW_CLAUSE).spaces(1)
+                .around(LET_CLAUSE).spaces(1)
+                .around(WHERE_CLAUSE).spaces(1)
+                .around(GROUP_BY_CLAUSE).spaces(1)
+                .around(ORDER_BY_CLAUSE).spaces(1)
+                .around(COUNT_CLAUSE).spaces(1)
+                .around(RETURN_CLAUSE).spaces(1)
+                .around(SWITCH_CASE_CLAUSE).spaces(1)
+                .around(SWITCH_RETURN_CLAUSE).spaces(1)
+                .around(SWITCH_DEFAULT_RETURN_CLAUSE).spaces(1)
+                .around(CASE_CLAUSE).spaces(1)
+                .around(TYPESWITCH_DEFAULT_RETURN_CLAUSE).spaces(1)
+                .around(TYPE_DECLARATION).spaces(1)
+                .around(TRY_CLAUSE).spaces(1)
+                .around(CATCH_CLAUSE).spaces(1)
+
                 .after(L_BRACKET).none()
                 .before(R_BRACKET).none()
                 .after(L_C_BRACE).none()
+                .before(L_C_BRACE).spaces(1)
                 .before(R_C_BRACE).none()
+                .after(R_C_BRACE).spaces(1)
                 .before(ARGUMENT_LIST).none()
                 .before(ARGUMENT).none()
                 .after(ARGUMENT).none()
                 .before(PARAM).none()
                 .after(PARAM).none()
+                .after(EXPR).none()
                 ;
     }
 
