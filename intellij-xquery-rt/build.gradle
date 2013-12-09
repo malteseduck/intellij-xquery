@@ -18,10 +18,20 @@
 
 
 
+
+
 apply plugin: 'java'
 apply plugin: 'idea'
+apply from: 'idea.gradle'
 
 sourceCompatibility = 1.6
+
+sourceSets {
+    testFunctional {
+        compileClasspath = sourceSets.main.output + configurations.testRuntime
+        runtimeClasspath = output + sourceSets.main.output + configurations.testRuntime
+    }
+}
 
 repositories {
     mavenCentral()
@@ -45,8 +55,7 @@ tasks.withType(Compile) {
     options.compilerArgs << "-Xlint:unchecked"
 }
 
-test {
-    include '**/org/intellij/xquery/unit/**'
-    include '**/org/intellij/xquery/functional/**'
-    include '**/org/intellij/xquery/integration/**'
+task testFunctional(type: Test) {
+    testClassesDir = sourceSets.testFunctional.output.classesDir
+    classpath = sourceSets.testFunctional.runtimeClasspath
 }
